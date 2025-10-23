@@ -1,3 +1,3 @@
-Contributors: Kishore Karthikeyan, Matt Topham, Aiden Johnson, Ellie Odau, Harrie Ha, Emir
+Contributors: Kishore Karthikeyan, Matt Topham, Aiden Johnson, Ellie Odau, Harrie Ha, Emir Simsek
 
 Application description: Our finance tracker application is a personal finance and social spending platform that helps users monitor their daily expenses while engaging with friends in a fun, interactive way. The core functionality allows users to log income and expenses, categorize their transactions, and visualize their spending patterns over time. The app provides insights for users as to where their money is going and helps users set budgets and financial limits to build smarter spending habits. Along with this, users can post their daily spendings for their friends to see, creating a transparent community around personal finance.
