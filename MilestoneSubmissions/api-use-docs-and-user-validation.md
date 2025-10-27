@@ -1,5 +1,5 @@
 # 13-04 API Use Documentation & User Validation
-> Version: 2025-10-27 • Scope: v1 • Stack: Node/Express + Handlebars + Postgres (Docker) + session cookies
+> Version: 2025-10-27 • v1 • Stack: Node/Express + Handlebars + Postgres (Docker) + session cookies
 
 ---
 
