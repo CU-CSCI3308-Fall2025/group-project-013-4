@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - SpendWise</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Leaderboard Specific Styles */
+        .leaderboard-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .leaderboard-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .leaderboard-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .leaderboard-header p {
+            color: #64748b;
+            font-size: 1.125rem;
+        }
+
+        .leaderboard-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            color: #64748b;
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab-btn:hover {
+            color: #059669;
+        }
+
+        .tab-btn.active {
+            color: #059669;
+            border-bottom-color: #059669;
+        }
+
+        .leaderboard-list {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            transition: background 0.2s;
+        }
+
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+
+        .leaderboard-item:hover {
+            background: #f8fafc;
+        }
+
+        .leaderboard-item.top-three {
+            background: linear-gradient(to right, #f8fafc, white);
+        }
+
+        .rank-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .rank-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+
+        .rank-number.gold {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+        }
+
+        .rank-number.silver {
+            background: linear-gradient(135deg, #e5e7eb, #9ca3af);
+            color: white;
+            box-shadow: 0 4px 12px rgba(156, 163, 175, 0.4);
+        }
+
+        .rank-number.bronze {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: white;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+        }
+
+        .rank-number.regular {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 2;
+        }
+
+        .user-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(to bottom right, #34d399, #14b8a6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .user-info h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        .user-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .savings-section {
+            text-align: right;
+            flex: 1;
+        }
+
+        .savings-amount {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #059669;
+            margin-bottom: 0.25rem;
+        }
+
+        .savings-label {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .trend-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
+        .trend-badge.up {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .trend-badge.down {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .podium-section {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            padding: 2rem;
+        }
+
+        .podium-item {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .podium-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(to bottom right, #34d399, #14b8a6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .podium-item.first .podium-avatar {
+            width: 100px;
+            height: 100px;
+            font-size: 2rem;
+        }
+
+        .podium-stand {
+            width: 150px;
+            border-radius: 0.5rem 0.5rem 0 0;
+            color: white;
+            padding: 1.5rem 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .podium-item.first .podium-stand {
+            height: 180px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        }
+
+        .podium-item.second {
+            order: -1;
+        }
+
+        .podium-item.second .podium-stand {
+            height: 140px;
+            background: linear-gradient(135deg, #e5e7eb, #9ca3af);
+        }
+
+        .podium-item.third .podium-stand {
+            height: 100px;
+            background: linear-gradient(135deg, #f97316, #ea580c);
+        }
+
+        .podium-rank {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .podium-name {
+            font-weight: 600;
+            font-size: 1.125rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .podium-savings {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .leaderboard-item {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .rank-section,
+            .user-section,
+            .savings-section {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .podium-section {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .podium-item.second {
+                order: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                </div>
+                <span class="logo-text">SpendWise</span>
+            </div>
+
+            <div class="nav-menu">
+                <a href="index.html" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    <span>Home</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                    <span>Add Post</span>
+                </a>
+                <a href="leaderboard.html" class="nav-item active">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                        <path d="M4 22h16"></path>
+                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                    </svg>
+                    <span>Leaderboard</span>
+                </a>
+                <div class="nav-item dropdown">
+                    <button class="dropdown-toggle" id="profileDropdown">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <span>Profile</span>
+                    </button>
+                    <div class="dropdown-menu" id="profileMenu">
+                        <a href="#" class="dropdown-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"></path>
+                            </svg>
+                            <span>Settings</span>
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <div class="leaderboard-container">
+            <!-- Header -->
+            <div class="leaderboard-header">
+                <h1>🏆 Top Savers Leaderboard</h1>
+                <p>See who's crushing their savings goals!</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="leaderboard-tabs">
+                <button class="tab-btn active">Daily</button>
+                <button class="tab-btn">Weekly</button>
+                <button class="tab-btn">Monthly</button>
+                <button class="tab-btn">All Time</button>
+            </div>
+
+            <!-- Top 3 Podium -->
+            <div class="podium-section">
+                <div class="podium-item second">
+                    <div class="podium-avatar">AK</div>
+                    <div class="podium-stand">
+                        <div class="podium-rank">2</div>
+                        <div class="podium-name">Alex K.</div>
+                        <div class="podium-savings">$538.75</div>
+                    </div>
+                </div>
+                <div class="podium-item first">
+                    <div class="podium-avatar">SM</div>
+                    <div class="podium-stand">
+                        <div class="podium-rank">1</div>
+                        <div class="podium-name">Sarah M.</div>
+                        <div class="podium-savings">$645.20</div>
+                    </div>
+                </div>
+                <div class="podium-item third">
+                    <div class="podium-avatar">JP</div>
+                    <div class="podium-stand">
+                        <div class="podium-rank">3</div>
+                        <div class="podium-name">Jordan P.</div>
+                        <div class="podium-savings">$432.50</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard List -->
+            <div class="leaderboard-list" id="leaderboardList"></div>
+        </div>
+    </main>
+
+    <script>
+        // Sample Data
+        const leaderboardData = [
+            { rank: 1, name: "Sarah M.", avatar: "SM", savings: 645.20, posts: 42, streak: 15, trend: "up" },
+            { rank: 2, name: "Alex K.", avatar: "AK", savings: 538.75, posts: 38, streak: 12, trend: "up" },
+            { rank: 3, name: "Jordan P.", avatar: "JP", savings: 432.50, posts: 35, streak: 10, trend: "down" },
+            { rank: 4, name: "Emily Chen", avatar: "EC", savings: 398.20, posts: 31, streak: 8, trend: "up" },
+            { rank: 5, name: "Marcus Rodriguez", avatar: "MR", savings: 367.90, posts: 29, streak: 9, trend: "up" },
+            { rank: 6, name: "Priya Sharma", avatar: "PS", savings: 342.15, posts: 27, streak: 7, trend: "down" },
+            { rank: 7, name: "David Kim", avatar: "DK", savings: 318.60, posts: 25, streak: 6, trend: "up" },
+            { rank: 8, name: "Lisa Wang", avatar: "LW", savings: 295.40, posts: 23, streak: 11, trend: "up" },
+            { rank: 9, name: "James Taylor", avatar: "JT", savings: 271.85, posts: 21, streak: 5, trend: "down" },
+            { rank: 10, name: "Sofia Martinez", avatar: "SM2", savings: 248.30, posts: 19, streak: 4, trend: "up" }
+        ];
+
+        // Profile Dropdown Toggle
+        const profileDropdown = document.getElementById('profileDropdown');
+        const profileMenu = document.getElementById('profileMenu');
+
+        profileDropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileMenu.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!profileDropdown.contains(e.target) && !profileMenu.contains(e.target)) {
+                profileMenu.classList.remove('show');
+            }
+        });
+
+        // Render Leaderboard
+        function renderLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboardList');
+            
+            // Skip top 3 as they're in the podium
+            const listData = leaderboardData.slice(3);
+            
+            leaderboardList.innerHTML = listData.map(user => {
+                const rankClass = user.rank <= 3 ? 
+                    (user.rank === 1 ? 'gold' : user.rank === 2 ? 'silver' : 'bronze') : 
+                    'regular';
+                
+                return `
+                    <div class="leaderboard-item ${user.rank <= 3 ? 'top-three' : ''}">
+                        <div class="rank-section">
+                            <div class="rank-number ${rankClass}">${user.rank}</div>
+                        </div>
+                        <div class="user-section">
+                            <div class="user-avatar">${user.avatar}</div>
+                            <div class="user-info">
+                                <h3>${user.name}</h3>
+                                <div class="user-stats">
+                                    <span class="stat-item">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                        </svg>
+                                        ${user.posts} posts
+                                    </span>
+                                    <span class="stat-item">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                        </svg>
+                                        ${user.streak} day streak
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="savings-section">
+                            <div class="savings-amount">$${user.savings.toFixed(2)}</div>
+                            <div class="savings-label">Total Saved</div>
+                            <span class="trend-badge ${user.trend}">
+                                ${user.trend === 'up' ? '↑' : '↓'} ${user.trend === 'up' ? '+12%' : '-5%'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Tab Switching
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                // Here you would load different data based on the selected tab
+            });
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderLeaderboard();
+        });
+    </script>
+</body>
+</html>
