@@ -1,25 +1,11 @@
+version: "3.9"
+
 services:
-  db:
-    image: postgres:14
-    env_file: .env
-    expose:
-      - '5432'
-    volumes:
-      - group-project:/var/lib/postgresql/data
-      - ./src/init_data:/docker-entrypoint-initdb.d
   web:
-    image: node:lts
-    user: 'node'
-    working_dir: /repository
-    env_file: .env
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - db
+    image: nginx:latest
+    container_name: finance_tracker_web
     ports:
-      - '3000:3000'
+      - "8080:80"
     volumes:
-      - ./:/repository
-    command: 'npm start'
-volumes:
-  group-project:
+      - ./frontend:/usr/share/nginx/html
+    restart: always
