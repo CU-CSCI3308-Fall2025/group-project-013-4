@@ -1,4 +1,4 @@
-# **13-04 API Use Documentation & User Validation — WalletWatch** 
+# **13-04 API Use Documentation & User Validation** 
 
 This document specifies WalletWatch’s API usage, authentication and authorization model, user validation rules, core endpoints, error conventions, and security practices. It aligns with our Lab‑7 Express/Node server, Postgres database, and TA notes on public/private/groups sharing and the opt‑in leaderboard.
 
@@ -38,7 +38,7 @@ Resource                 Public 	User              	Admin (opt)
 
 ## **5\) Auth & Session Flow**
 
-Authentication uses server-side sessions with HttpOnly cookies. Production deployments must set Secure and SameSite appropriately.
+Authentication uses server-side sessions with HttpOnly cookies. Production deployments must set Secure.
 
 Registration → bcrypt hash → insert → session optional; Login → bcrypt compare → session create; Logout → session destroy; WhoAmI → returns session user.
 
