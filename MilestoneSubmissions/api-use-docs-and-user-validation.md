@@ -1,211 +1,241 @@
-# **13-04 API Use Documentation & User Validation** 
+# 13-04 API Use Documentation & User Validation
+> Version: 2025-10-27 • Scope: v1 (no external API) • Stack: Node/Express + Handlebars + Postgres (Docker) + session cookies
 
-This document specifies WalletWatch’s API usage, authentication and authorization model, user validation rules, core endpoints, error conventions, and security practices. It aligns with our Lab‑7 Express/Node server, Postgres database, and TA notes on public/private/groups sharing and the opt‑in leaderboard.
+---
 
-## **1\) Overview**
+## Table of Contents
+1. [Overview](#overview)
+2. [Base URL](#base-url)
+3. [Auth & Roles](#auth--roles)
+4. [Permissions Matrix](#permissions-matrix)
+5. [Auth & Session Flow](#auth--session-flow)
+6. [Validation Rules](#validation-rules)
+7. [Endpoints](#endpoints)
+   - [Users](#users)
+   - [Transactions](#transactions)
+   - [Posts](#posts)
+   - [Leaderboard](#leaderboard)
+8. [Data Model (excerpt)](#data-model-excerpt)
+9. [Errors & Conventions](#errors--conventions)
+10. [Security Controls](#security-controls)
+11. [External API Decision](#external-api-decision)
+12. [Runbook (Local Dev)](#runbook-local-dev)
+13. [Appendix A — Sample Validation Schema](#appendix-a--sample-validation-schema)
 
-• Stack: Node/Express, Handlebars UI, Postgres (Dockerized), session cookies.  
- • Features (v1): registration/login, session-based auth, CRUD for transactions, categories & budgets, personal dashboard, optional social feed with daily spend posts, and an opt‑in leaderboard.
+---
 
-Passwords are hashed with bcrypt and never stored in plaintext. Private data is scoped to the authenticated user unless otherwise shared via explicit settings.
+## Overview
+WalletWatch is a personal finance app with **registration/login**, **session-based auth**, **CRUD for transactions**, **categories/budgets**, a **personal dashboard**, and an **optional social layer** (daily spend posts + **opt‑in** leaderboard). Passwords are **bcrypt**‑hashed; protected routes require a valid session.
 
-## **2\) Base URL**
+## Base URL
+- **Local (Docker)**: `http://localhost:3000`  
+- **API prefix (recommended)**: `/api/v1`
 
-Local (Docker): http://localhost:3000  
- API prefix (recommended): /api/v1
+## Auth & Roles
+- **Roles**: `Public`, `User`, `Admin (optional)`  
+- **Sharing levels**: `private | friends | public`  
+- **Flags**: `leaderboardOptIn` (boolean)  
+- **Groups**: allow‑lists that define the **friends** scope  
+**Default privacy**: *private*. Users must explicitly opt in to appear on the leaderboard. Per‑transaction details stay private unless posted to the feed.
 
-## **3\) Authentication & Authorization Model**
+## Permissions Matrix
+| Resource / Action                  | Public | User (owner)            | Admin (opt)      |
+|-----------------------------------|:------:|-------------------------|------------------|
+| **Auth**: register/login          |   ✓    | ✓                       | ✓                |
+| **Session**: `/auth/me`           |   —    | ✓                       | ✓                |
+| **Logout**                         |   —    | ✓                       | ✓                |
+| **Transactions**                  |   —    | **CRUD**                | All users        |
+| **Posts**                         |   —    | **CRUD**                | All users        |
+| **Leaderboard (opt‑in only)**     |   —    | read / opt‑in           | manage           |
+| **Admin tools**                   |   —    | —                        | ✓                |
 
-Roles: Public, User, Admin (optional)  
- Sharing levels: private | friends | public  
- Flags: leaderboardOptIn (boolean)  
- Groups: allow‑lists that define the ‘friends’ scope
+## Auth & Session Flow
+- Sessions use **HttpOnly** cookies. In production set **Secure** and **SameSite=strict**.
+- **Registration** → bcrypt hash → insert user → (optionally) log in.  
+- **Login** → bcrypt compare → create session (`req.session.user`).  
+- **Logout** → destroy session.  
+- **WhoAmI** → returns current user from session.  
+- **Password reset**: *out of scope for v1*.
 
-Expectations: The default is private. Users can explicitly opt into the leaderboard; per‑transaction details remain private unless the user posts them to the feed.
+### Registration
+**Request**
+```http
+POST /api/v1/auth/register
+Content-Type: application/json
 
-## **4\) Permissions Matrix** 
+{
+  "email": "alice@example.com",
+  "password": "strong-pass",
+  "displayName": "Alice"
+}
+```
+**Responses**
+- `201 Created` → `{ "user": { ... } }`
+- `400 Bad Request` (malformed email/password)
+- `409 Conflict` (email already exists)
 
-Resource                 Public 	User              	Admin (opt)  
- \-----------------------  \---------  \--------------------  \----------  
- Auth: register/login 	✓      	✓                 	✓  
- Session: /auth/me    	—      	✓                 	✓  
- Session: /logout     	—      	✓                 	✓  
- Transactions (own)   	—      	CRUD              	All users  
- Posts (own)          	—      	CRUD              	All users  
- Leaderboard (opt‑in) 	—      	read/join        	 manage  
- Users (others, public)   —      	read (respect privacy) manage  
- Admin tools          	—      	—                  	✓
+### Login
+**Request**
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
 
-## **5\) Auth & Session Flow**
+{
+  "email": "alice@example.com",
+  "password": "strong-pass"
+}
+```
+**Responses**
+- `200 OK` → `{ "user": { ... } }` and **session cookie**
+- `401 Unauthorized` (invalid credentials)
 
-Authentication uses server-side sessions with HttpOnly cookies. Production deployments must set Secure.
+### WhoAmI & Logout
+```http
+GET  /api/v1/auth/me      → 200 { user }         (requires session)
+POST /api/v1/auth/logout  → 200 { loggedOut: true }
+```
 
-Registration → bcrypt hash → insert → session optional; Login → bcrypt compare → session create; Logout → session destroy; WhoAmI → returns session user.
+### Route Protection (middleware example)
+```js
+const auth = (req, res, next) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'auth_required' });
+  next();
+};
+```
 
-## **5.1) Registration**
+## Validation Rules
+Apply **server-side** validation for **every** endpoint:
+- **Email**: required, RFC format, **unique** on register
+- **Password**: required, **min 8 chars**; bcrypt hash; never log/store plaintext
+- **AuthZ**: every read/write **scoped to `req.session.user.id`** unless Admin
+- **Share rules**: feed/leaderboard honor `shareLevel`, `groups`, `leaderboardOptIn`
+- **Sanitize**: reject unexpected fields/types; bound numeric ranges and string lengths
 
-POST /api/v1/auth/register  
- Content-Type: application/json  
- {  
-   "email": "alice@example.com",  
-   "password": "strong-pass",  
-   "displayName": "Alice"  
- }
+Failure responses:
+- `400 validation_error` → `{ "error":"validation_error","details":[{"field":"…","message":"…"}] }`
+- `401 auth_required` / `invalid_credentials`
+- `403 forbidden` (ownership/scope)
+- `404 not_found` (not visible or doesn’t exist)
 
-Responses:  
- • 201 Created → { user }  
- • 400 Bad Request (invalid email/password)  
- • 409 Conflict (email already exists)
+## Endpoints
+All endpoints require a valid session unless marked **Public**.  
+Where applicable, list **pagination**: `?limit` (default 25, max 100) and `?offset`.
 
+### Users
+**GET `/api/v1/users/me`** → `200`
+```json
+{ "id":"...", "email":"...", "displayName":"...", "shareLevel":"private|friends|public",
+  "leaderboardOptIn": false, "groups": ["roommates","finance-club"] }
+```
+**PATCH `/api/v1/users/me`** → update privacy/settings
+```http
+Body: { "shareLevel"?: "...", "leaderboardOptIn"?: true|false, "groups"?: [string] }
+```
+Responses: `200 { user }` | `400 validation_error`
 
-## **5.2) Login**
+### Transactions
+**GET `/api/v1/transactions?from=YYYY-MM-DD&to=YYYY-MM-DD&limit&offset`** → list
+```json
+[ { "id":1,"itemName":"Coffee","category":"Food","amount":3.75,"occurredAt":"2025-10-27" } ]
+```
+**POST `/api/v1/transactions`**
+```json
+{ "itemName":"Coffee","category":"Food","amount":3.75,"occurredAt":"2025-10-27" }
+```
+Responses: `201 { id }` | `400 validation_error`
+**PATCH `/api/v1/transactions/:id`** → `200 { updated: true }`
+**DELETE `/api/v1/transactions/:id`** → `200 { deleted: true }`
 
-POST /api/v1/auth/login  
- {  
-   "email": "alice@example.com",  
-   "password": "strong-pass"  
- }
+**Example cURL (session cookies):**
+```bash
+curl -X POST http://localhost:3000/api/v1/transactions   -H 'Content-Type: application/json'   -b cookiejar.txt -c cookiejar.txt   -d '{"itemName":"Coffee","category":"Food","amount":3.75,"occurredAt":"2025-10-27"}'
+```
 
-Responses:  
- • 200 OK → { user } \+ session cookie  
- • 401 Unauthorized (bad credentials)
+### Posts
+**GET `/api/v1/posts/feed?limit&offset`** → respects share rules
+```json
+[ { "id":7, "user": { "displayName":"Alice" }, "text":"No-spend day!", "totalSpent":0, "createdAt":"2025-10-27T16:00:00Z" } ]
+```
+**POST `/api/v1/posts`** → `201 { id }`  
+**DELETE `/api/v1/posts/:id`** → `200 { deleted: true }`
 
-## **5.3) WhoAmI & Logout**
+### Leaderboard
+**GET `/api/v1/leaderboard?period=week|month&limit&offset`**
+```json
+[ { "user": { "displayName": "Alice" }, "periodTotal": 123.45 } ]
+```
+Only users with `leaderboardOptIn=true` are included.
 
-GET  /api/v1/auth/me   	→ Returns the current user (requires session)  
- POST /api/v1/auth/logout   → Destroys session
+## Data Model (excerpt)
+```sql
+users(
+  id PK, email UNIQUE, password_hash, display_name,
+  share_level, leaderboard_opt_in BOOLEAN DEFAULT FALSE, created_at
+);
 
-## **5.4) Route Protection (Middleware)**
+transactions(
+  id PK, user_id FK, item_name, category,
+  amount NUMERIC(10,2), occurred_at, created_at
+);
 
-const auth \= (req, res, next) \=\> {  
-   if (\!req.session?.user) return res.status(401).json({ error: 'auth\_required' });  
-   next();  
- };
+posts(
+  id PK, user_id FK, text, total_spent NUMERIC(10,2), created_at
+);
+```
 
-## **6\) User Validation**
+## Errors & Conventions
+| Code | Meaning                         | Notes / Example                                          |
+|-----:|----------------------------------|-----------------------------------------------------------|
+| 200  | OK                               | Success payload                                           |
+| 201  | Created                          | Resource created                                          |
+| 400  | validation_error                 | `details: [{field,message}]`                              |
+| 401  | auth_required / invalid_credentials | No session / bad login                                |
+| 403  | forbidden                        | Ownership/scope violation                                 |
+| 404  | not_found                        | Resource not visible or missing                           |
+| 409  | conflict                         | e.g., email already exists                                |
+| 429  | rate_limited                     | Optional                                                  |
+| 5xx  | server_error                     | Unexpected                                                |
 
-Server-side validation is mandatory on every endpoint. At minimum:
+**Standard error body**
+```json
+{
+  "error": "validation_error",
+  "details": [{ "field": "email", "message": "invalid_format" }]
+}
+```
 
-• Email: required, RFC format, unique on register  
- • Password: required, min length 8, hashed with bcrypt; never log/store plaintext  
- • Authorization: every query/update/delete is scoped to req.session.user.id unless Admin  
- • Share rules: feed/leaderboard responses honor shareLevel, groups, and leaderboardOptIn  
- • Input sanitation: reject unexpected fields, types, and ranges
+## Security Controls
+- **Password hashing**: bcrypt; constant‑time compare
+- **Cookies**: HttpOnly; **Secure & SameSite=strict in prod**
+- **CSRF**: protect state‑changing routes (either CSRF token on forms **or** rely on SameSite=strict with credentialed XHR)
+- **Input validation & output encoding**; never trust client‑supplied `user_id`
+- **SQL**: parameterized queries; least‑privileged DB user
+- **Logging**: auth events + admin actions (optional)
 
-Failure responses:  
- • 400 validation\_error → { field, message }  
- • 401 auth\_required / invalid\_credentials  
- • 403 forbidden (ownership or scope violation)  
- • 404 not\_found (resource not visible or does not exist)
+## External API Decision
+**Not used in v1.** Barcode/UPC or OpenFDA is misaligned with finance; **Plaid** is closer to purpose but heavy for course scope and introduces sensitive data handling. v1 relies on **manual inputs**: item, category, amount.
 
-## **7\) Core Endpoints (v1)**
+## Runbook (Local Dev)
+```text
+1) docker compose up -d
+2) Apply init SQL + seeds if present
+3) Set env vars: SESSION_SECRET, DB creds
+4) npm install && npm start
+5) Visit http://localhost:3000
+```
 
-All endpoints below require a valid session unless marked Public.
-
-## **7.1) Users**
-
-GET  /api/v1/users/me  
- → 200 { id, email, displayName, shareLevel, leaderboardOptIn, groups }
-
- PATCH /api/v1/users/me  
- Body: { shareLevel?: 'private'|'friends'|'public', leaderboardOptIn?: boolean, groups?: string\[\] }  
- → 200 { user } | 400 validation\_error
-
-## **7.2) Transactions**
-
-GET  /api/v1/transactions?from=YYYY-MM-DD\&to=YYYY-MM-DD  
- → 200 \[{ id, itemName, category, amount, occurredAt }\]
-
- POST /api/v1/transactions  
- Body: { itemName: string, category: string, amount: number, occurredAt: ISODate }  
- → 201 { id }
-
- PATCH /api/v1/transactions/:id  
- Body: { itemName?, category?, amount?, occurredAt? }  
- → 200 { updated: true }
-
- DELETE /api/v1/transactions/:id  
- → 200 { deleted: true }
-
-## **7.3) Posts (Daily Spend)**
-
-GET  /api/v1/posts/feed  
- → 200 \[{ id, user: { displayName }, text, totalSpent, createdAt }\] (respects share rules)
-
- POST /api/v1/posts  
- Body: { text: string, totalSpent: number }  
- → 201 { id }
-
- DELETE /api/v1/posts/:id  
- → 200 { deleted: true }
-
-## **7.4) Leaderboard (Opt‑in Only)**
-
-GET /api/v1/leaderboard?period=week|month  
- → 200 \[{ user: { displayName }, periodTotal }\]  
- • Only users with leaderboardOptIn=true are included.
-
-## **8\) Data Model (excerpt)**
-
-users(  
-   id PK, email UNIQUE, password\_hash, display\_name,  
-   share\_level, leaderboard\_opt\_in BOOLEAN DEFAULT FALSE, created\_at  
- )
-
- transactions(  
-   id PK, user\_id FK, item\_name, category,  
-   amount NUMERIC(10,2), occurred\_at, created\_at  
- )
-
- posts(  
-   id PK, user\_id FK, text, total\_spent NUMERIC(10,2), created\_at  
- )
-
-## **9\) Error & Response Conventions**
-
-200 OK        	→ success payload  
- 201 Created   	→ resource created  
- 400 Bad Request   → validation\_error { field, message }  
- 401 Unauthorized  → auth\_required | invalid\_credentials  
- 403 Forbidden 	→ forbidden (ownership/scope)  
- 404 Not Found 	→ not\_found  
- 409 Conflict  	→ duplicate (e.g., email in use)  
- 429 Too Many  	→ rate\_limited  
- 5xx Server Error  → server\_error
-
-## **10\) Security Controls** 
-
-• Password hashing (bcrypt) and constant‑time compare.  
- • HttpOnly cookies; set Secure and SameSite=strict in production.  
- • CSRF defenses for state‑changing browser posts (CSRF token or same‑site strategy).  
- • Input validation \+ output encoding; never trust client fields like user\_id.  
- • Principle of Least Privilege in SQL; parameterized queries.  
- • Audit logs for auth events (optional).
-
-## **11\) External API Decision (v1)**
-
-We are \*\*not\*\* using an external API in v1. The team considered barcode scanning (e.g., OpenFDA) and banking aggregation (Plaid). Barcode/UPC flows are a poor fit for finance tracking and add mobile camera \+ external database complexity. Plaid is closer to purpose but heavy for course scope and raises security/PII handling requirements. Therefore v1 relies on manual inputs: item name, category, amount.
-
-## **12\) Runbook (Local Dev)**
-
-1\) Docker up the stack (web \+ db)  
- 2\) Apply init SQL and seed if present  
- 3\) Set env vars: SESSION\_SECRET, DB creds  
- 4\) npm install && npm start  
- 5\) Visit http://localhost:3000
-
-## **Appendix A — Sample Validation Rules**
-
-email: string, 5..254 chars, RFC 5322, unique  
- password: string, min 8 chars; recommended: 1 upper, 1 lower, 1 digit  
- displayName: string, 1..50 chars  
- itemName: string, 1..80 chars  
- category: enum or string (1..40 chars)  
- amount: number \> 0, max 1e7  
- occurredAt: ISO-8601 date  
- shareLevel: one of \['private','friends','public'\]  
- groups: string\[\]; each 1..40 chars  
- text: string up to 500 chars
-
-# 
-
+## Appendix A — Sample Validation Schema
+```json
+{
+  "email":      { "type":"string", "min":5,  "max":254, "format":"email" },
+  "password":   { "type":"string", "min":8 },
+  "displayName":{ "type":"string", "min":1,  "max":50 },
+  "itemName":   { "type":"string", "min":1,  "max":80 },
+  "category":   { "type":"string", "min":1,  "max":40 },
+  "amount":     { "type":"number", "exclusiveMinimum": 0, "maximum": 10000000 },
+  "occurredAt": { "type":"string", "format":"date" },
+  "shareLevel": { "enum":["private","friends","public"] },
+  "groups":     { "type":"array", "items": { "type":"string", "min":1, "max":40 } },
+  "text":       { "type":"string", "max":500 }
+}
+```
