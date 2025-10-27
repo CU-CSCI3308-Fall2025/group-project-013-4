@@ -57,11 +57,6 @@ Responses:
  • 400 Bad Request (invalid email/password)  
  • 409 Conflict (email already exists)
 
-## 
-
-## 
-
-## 
 
 ## **5.2) Login**
 
