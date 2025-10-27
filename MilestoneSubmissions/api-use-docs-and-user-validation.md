@@ -1,26 +1,5 @@
 # 13-04 API Use Documentation & User Validation
-> Version: 2025-10-27 • Scope: v1 (no external API) • Stack: Node/Express + Handlebars + Postgres (Docker) + session cookies
-
----
-
-## Table of Contents
-1. [Overview](#overview)
-2. [Base URL](#base-url)
-3. [Auth & Roles](#auth--roles)
-4. [Permissions Matrix](#permissions-matrix)
-5. [Auth & Session Flow](#auth--session-flow)
-6. [Validation Rules](#validation-rules)
-7. [Endpoints](#endpoints)
-   - [Users](#users)
-   - [Transactions](#transactions)
-   - [Posts](#posts)
-   - [Leaderboard](#leaderboard)
-8. [Data Model (excerpt)](#data-model-excerpt)
-9. [Errors & Conventions](#errors--conventions)
-10. [Security Controls](#security-controls)
-11. [External API Decision](#external-api-decision)
-12. [Runbook (Local Dev)](#runbook-local-dev)
-13. [Appendix A — Sample Validation Schema](#appendix-a--sample-validation-schema)
+> Version: 2025-10-27 • Scope: v1 • Stack: Node/Express + Handlebars + Postgres (Docker) + session cookies
 
 ---
 
@@ -55,7 +34,7 @@ WalletWatch is a personal finance app with **registration/login**, **session-bas
 - **Login** → bcrypt compare → create session (`req.session.user`).  
 - **Logout** → destroy session.  
 - **WhoAmI** → returns current user from session.  
-- **Password reset**: *out of scope for v1*.
+- **Password reset**: resets user password. 
 
 ### Registration
 **Request**
@@ -214,15 +193,6 @@ posts(
 
 ## External API Decision
 **Not used in v1.** Barcode/UPC or OpenFDA is misaligned with finance; **Plaid** is closer to purpose but heavy for course scope and introduces sensitive data handling. v1 relies on **manual inputs**: item, category, amount.
-
-## Runbook (Local Dev)
-```text
-1) docker compose up -d
-2) Apply init SQL + seeds if present
-3) Set env vars: SESSION_SECRET, DB creds
-4) npm install && npm start
-5) Visit http://localhost:3000
-```
 
 ## Appendix A — Sample Validation Schema
 ```json
