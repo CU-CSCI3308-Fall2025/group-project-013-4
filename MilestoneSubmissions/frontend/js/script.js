@@ -1,3 +1,8 @@
+// Redirect to login if user is not logged in
+if (!localStorage.getItem("token")) {
+  window.location.href = "login.html";
+}
+
 // Sample Data
 const dailyLeaders = [
     { rank: 1, name: "Sarah M.", saved: 45.20, avatar: "SM" },
