@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // --- Profile dropdown toggle ---
+  // --- PROFILE DROPDOWN TOGGLE ---
   const profileDropdown = document.getElementById("profileDropdown");
   const profileMenu = document.getElementById("profileMenu");
 
@@ -16,18 +16,37 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-    const currentPage = window.location.pathname.split("/").pop() || "index.html";
-    const navItems = document.querySelectorAll(".nav-menu a.nav-item");
+  // --- ACTIVE PAGE HIGHLIGHT ---
+  const currentPage = window.location.pathname.split("/").pop() || "index.html";
+  const navItems = document.querySelectorAll(".nav-menu a.nav-item");
 
-    navItems.forEach((item) => {
-        const href = item.getAttribute("href");
+  navItems.forEach((item) => {
+    const href = item.getAttribute("href");
+    if (href && href.endsWith(".html") && href === currentPage) {
+      item.classList.add("active");
+    } else {
+      item.classList.remove("active");
+    }
+  });
 
-        // ✅ Only mark pages that actually have an HTML file link
-        if (href && href.endsWith(".html") && href === currentPage) {
-            item.classList.add("active");
-        } else {
-            item.classList.remove("active");
-        }
+  // --- LOGOUT FUNCTIONALITY ---
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      // Clear token and close dropdown
+      localStorage.removeItem("token");
+      if (profileMenu) profileMenu.classList.remove("show");
+
+      console.log("✅ Logged out successfully");
+      window.location.href = "login.html";
     });
+  }
+});
 
+// --- PREVENT BOOTSTRAP INTERFERENCE ---
+document.querySelectorAll("#profileDropdown, #profileMenu").forEach((el) => {
+  el.addEventListener("hide.bs.dropdown", (e) => e.stopImmediatePropagation());
+  el.addEventListener("click.bs.dropdown.data-api", (e) => e.stopImmediatePropagation());
 });

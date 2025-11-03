@@ -12,7 +12,7 @@ app.use(express.json()); // ← absolutely necessary for reading JSON bodies
 
 // Simple test route
 app.get("/", (req, res) => {
-  res.send("WalletWatch API Running ✅");
+  res.redirect("../frontend/login.html");
 });
 
 // 👇 ADD THIS BELOW YOUR TEST ROUTE
