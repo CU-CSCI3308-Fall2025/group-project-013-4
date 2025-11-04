@@ -1,0 +1,148 @@
+<body>
+
+   <!-- Main Content -->
+    <main class="main-container">
+        <div class="leaderboard-container">
+            <!-- Header -->
+            <div class="leaderboard-header">
+                <h1>🏆 Top Savers Leaderboard</h1>
+                <p>See who's crushing their savings goals!</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="leaderboard-tabs">
+                <button class="tab-btn active">Daily</button>
+                <button class="tab-btn">Weekly</button>
+                <button class="tab-btn">Monthly</button>
+                <button class="tab-btn">All Time</button>
+            </div>
+
+            <!-- Top 3 Podium -->
+            <div class="podium-section">
+                <div class="podium-item second">
+                    <div class="podium-avatar">AK</div>
+                    <div class="podium-stand">
+                        <div class="podium-rank">2</div>
+                        <div class="podium-name">Alex K.</div>
+                        <div class="podium-savings">$538.75</div>
+                    </div>
+                </div>
+                <div class="podium-item first">
+                    <div class="podium-avatar">SM</div>
+                    <div class="podium-stand">
+                        <div class="podium-rank">1</div>
+                        <div class="podium-name">Sarah M.</div>
+                        <div class="podium-savings">$645.20</div>
+                    </div>
+                </div>
+                <div class="podium-item third">
+                    <div class="podium-avatar">JP</div>
+                    <div class="podium-stand">
+                        <div class="podium-rank">3</div>
+                        <div class="podium-name">Jordan P.</div>
+                        <div class="podium-savings">$432.50</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard List -->
+            <div class="leaderboard-list" id="leaderboardList"></div>
+        </div>
+    </main>
+
+    <script>
+        // Sample Data
+        const leaderboardData = [
+            { rank: 1, name: "Sarah M.", avatar: "SM", savings: 645.20, posts: 42, streak: 15, trend: "up" },
+            { rank: 2, name: "Alex K.", avatar: "AK", savings: 538.75, posts: 38, streak: 12, trend: "up" },
+            { rank: 3, name: "Jordan P.", avatar: "JP", savings: 432.50, posts: 35, streak: 10, trend: "down" },
+            { rank: 4, name: "Emily Chen", avatar: "EC", savings: 398.20, posts: 31, streak: 8, trend: "up" },
+            { rank: 5, name: "Marcus Rodriguez", avatar: "MR", savings: 367.90, posts: 29, streak: 9, trend: "up" },
+            { rank: 6, name: "Priya Sharma", avatar: "PS", savings: 342.15, posts: 27, streak: 7, trend: "down" },
+            { rank: 7, name: "David Kim", avatar: "DK", savings: 318.60, posts: 25, streak: 6, trend: "up" },
+            { rank: 8, name: "Lisa Wang", avatar: "LW", savings: 295.40, posts: 23, streak: 11, trend: "up" },
+            { rank: 9, name: "James Taylor", avatar: "JT", savings: 271.85, posts: 21, streak: 5, trend: "down" },
+            { rank: 10, name: "Sofia Martinez", avatar: "SM2", savings: 248.30, posts: 19, streak: 4, trend: "up" }
+        ];
+
+        // Profile Dropdown Toggle
+        const profileDropdown = document.getElementById('profileDropdown');
+        const profileMenu = document.getElementById('profileMenu');
+
+        profileDropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileMenu.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!profileDropdown.contains(e.target) && !profileMenu.contains(e.target)) {
+                profileMenu.classList.remove('show');
+            }
+        });
+
+        // Render Leaderboard
+        function renderLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboardList');
+            
+            // Skip top 3 as they're in the podium
+            const listData = leaderboardData.slice(3);
+            
+            leaderboardList.innerHTML = listData.map(user => {
+                const rankClass = user.rank <= 3 ? 
+                    (user.rank === 1 ? 'gold' : user.rank === 2 ? 'silver' : 'bronze') : 
+                    'regular';
+                
+                return `
+                    <div class="leaderboard-item ${user.rank <= 3 ? 'top-three' : ''}">
+                        <div class="rank-section">
+                            <div class="rank-number ${rankClass}">${user.rank}</div>
+                        </div>
+                        <div class="user-section">
+                            <div class="user-avatar">${user.avatar}</div>
+                            <div class="user-info">
+                                <h3>${user.name}</h3>
+                                <div class="user-stats">
+                                    <span class="stat-item">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                        </svg>
+                                        ${user.posts} posts
+                                    </span>
+                                    <span class="stat-item">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                        </svg>
+                                        ${user.streak} day streak
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="savings-section">
+                            <div class="savings-amount">$${user.savings.toFixed(2)}</div>
+                            <div class="savings-label">Total Saved</div>
+                            <span class="trend-badge ${user.trend}">
+                                ${user.trend === 'up' ? '↑' : '↓'} ${user.trend === 'up' ? '+12%' : '-5%'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Tab Switching
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                // Here you would load different data based on the selected tab
+            });
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderLeaderboard();
+        });
+    </script>
+</body>

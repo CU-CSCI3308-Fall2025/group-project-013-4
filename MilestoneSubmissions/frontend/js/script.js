@@ -146,3 +146,11 @@ function renderPosts() {
     postsContainer.insertAdjacentHTML("beforeend", postHTML);
   });
 }
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    renderLeaders();
+    updateProgressBar();
+    renderPosts();
+});
+

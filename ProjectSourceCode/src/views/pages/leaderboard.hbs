@@ -1,0 +1,102 @@
+{{> header isLeaderboard=true }}
+
+<main class="main-container leaderboard-container">
+  <div class="leaderboard-header">
+    <h1>Top Savers</h1>
+    <p>Celebrate the community members who are leading the savings challenge.</p>
+  </div>
+
+  <div class="leaderboard-tabs">
+    <button class="tab-btn active" type="button">This Week</button>
+    <button class="tab-btn" type="button">This Month</button>
+    <button class="tab-btn" type="button">All Time</button>
+  </div>
+
+  <div class="leaderboard-list">
+    <div class="leaderboard-item top-three">
+      <div class="rank-section">
+        <div class="rank-number gold">1</div>
+        <div class="user-section">
+          <div class="user-avatar">SM</div>
+          <div class="user-info">
+            <h3>Sarah Mitchell</h3>
+            <div class="user-stats">
+              <span class="stat-item">12 goals reached</span>
+              <span class="stat-item">7 streak days</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="savings-section">
+        <div class="savings-amount">$325.50</div>
+        <div class="savings-label">Saved this week</div>
+        <span class="trend-badge positive">▲ 12%</span>
+      </div>
+    </div>
+
+    <div class="leaderboard-item top-three">
+      <div class="rank-section">
+        <div class="rank-number silver">2</div>
+        <div class="user-section">
+          <div class="user-avatar">AK</div>
+          <div class="user-info">
+            <h3>Alex Kim</h3>
+            <div class="user-stats">
+              <span class="stat-item">9 goals reached</span>
+              <span class="stat-item">5 streak days</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="savings-section">
+        <div class="savings-amount">$287.40</div>
+        <div class="savings-label">Saved this week</div>
+        <span class="trend-badge positive">▲ 7%</span>
+      </div>
+    </div>
+
+    <div class="leaderboard-item top-three">
+      <div class="rank-section">
+        <div class="rank-number bronze">3</div>
+        <div class="user-section">
+          <div class="user-avatar">JP</div>
+          <div class="user-info">
+            <h3>Jordan Perez</h3>
+            <div class="user-stats">
+              <span class="stat-item">8 goals reached</span>
+              <span class="stat-item">4 streak days</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="savings-section">
+        <div class="savings-amount">$244.10</div>
+        <div class="savings-label">Saved this week</div>
+        <span class="trend-badge positive">▲ 5%</span>
+      </div>
+    </div>
+
+    <div class="leaderboard-item">
+      <div class="rank-section">
+        <div class="rank-number regular">4</div>
+        <div class="user-section">
+          <div class="user-avatar">EC</div>
+          <div class="user-info">
+            <h3>Emily Chen</h3>
+            <div class="user-stats">
+              <span class="stat-item">6 goals reached</span>
+              <span class="stat-item">3 streak days</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="savings-section">
+        <div class="savings-amount">$198.75</div>
+        <div class="savings-label">Saved this week</div>
+        <span class="trend-badge positive">▲ 3%</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+{{> footer year=year }}
