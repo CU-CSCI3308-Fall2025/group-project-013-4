@@ -1,11 +1,41 @@
-version: "3.9"
+version: '3.8'
 
 services:
-  web:
-    image: nginx:latest
-    container_name: finance_tracker_web
+  db:
+    image: postgres:15
+    container_name: walletwatch-db
+    restart: always
+    environment:
+      POSTGRES_USER: walletwatch_user
+      POSTGRES_PASSWORD: walletwatch_pass
+      POSTGRES_DB: walletwatch
     ports:
-      - "8080:80"
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/create.sql:/docker-entrypoint-initdb.d/create.sql
+
+  backend:
+    image: node:18
+    container_name: walletwatch-backend
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    command: sh -c "npm install && npm start"
+    ports:
+      - "5001:5000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+
+  frontend:
+    image: nginx:alpine
+    container_name: walletwatch-frontend
     volumes:
       - ./frontend:/usr/share/nginx/html
-    restart: always
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:

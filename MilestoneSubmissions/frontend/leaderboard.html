@@ -329,7 +329,7 @@
             </div>
 
             <div class="nav-menu">
-                <a href="#" class="nav-item active">
+                <a href="index.html" class="nav-item">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                         <polyline points="9 22 9 12 15 12 15 22"></polyline>
@@ -487,6 +487,11 @@
 
     <script>
         // Sample Data
+        // Redirect to login if user is not logged in
+        if (!localStorage.getItem("token")) {
+        window.location.href = "login.html";
+        }
+
         const leaderboardData = [
             { rank: 1, name: "Sarah M.", avatar: "SM", savings: 645.20, posts: 42, streak: 15, trend: "up" },
             { rank: 2, name: "Alex K.", avatar: "AK", savings: 538.75, posts: 38, streak: 12, trend: "up" },
@@ -499,21 +504,6 @@
             { rank: 9, name: "James Taylor", avatar: "JT", savings: 271.85, posts: 21, streak: 5, trend: "down" },
             { rank: 10, name: "Sofia Martinez", avatar: "SM2", savings: 248.30, posts: 19, streak: 4, trend: "up" }
         ];
-
-        // Profile Dropdown Toggle
-        const profileDropdown = document.getElementById('profileDropdown');
-        const profileMenu = document.getElementById('profileMenu');
-
-        profileDropdown.addEventListener('click', (e) => {
-            e.stopPropagation();
-            profileMenu.classList.toggle('show');
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!profileDropdown.contains(e.target) && !profileMenu.contains(e.target)) {
-                profileMenu.classList.remove('show');
-            }
-        });
 
         // Render Leaderboard
         function renderLeaderboard() {
@@ -580,5 +570,7 @@
             renderLeaderboard();
         });
     </script>
+    <script src="js/navbar.js"></script>
+    <script src="js/authGuard.js"></script>
 </body>
 </html>
