@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  frontend:
+    build: .
+    container_name: handlebars_app
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
