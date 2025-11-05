@@ -173,10 +173,11 @@ app.post('/api/auth/login', async (req, res) => {
       token
     });
   } catch (error) {
-    console.error('❌ Login error:', error.message);
+    console.error(' Login error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
+
 
 app.get('/api/auth/me', protect, async (req, res) => {
   try {
