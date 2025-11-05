@@ -190,6 +190,155 @@ app.get('/api/auth/me', protect, async (req, res) => {
   }
 });
 
+//friend request functionality starts here:
+
+function getCurrentUserId(req){
+  return req.user.id;
+}
+
+//send request
+app.post('/friends/request', async (req, res) => {
+  const senderId = getCurrentUserId(req);
+  const { recipientId } = req.body;
+
+  if(senderId == recipientId){
+    return res.status(400).json({error: "You can't friend yourself!"});
+  }
+
+  //check to see if the sender has already been sent a request by the recipient
+  const duplicateRequest = await db.query(
+    `SELECT * FROM friends
+    WHERE (user_id=$2 AND friend_id=$1)`,
+    [senderId, friendId]
+  );
+
+  if(duplicateRequest.rowCount > 0){
+    return res.status(400).json({ error: 'Friend request already exists or is pending.'});
+  }
+
+  try {
+    await db.query(
+      `INSERT INTO friends (user_id, friend_id) VALUES ($1, $2)`,
+      [senderId, recipientId]
+    );
+    res.json({ message: 'Friend request sent!'});
+  } catch (err) {
+      if (err.code === '23505') { //need to update db to have unique property on friends so this functions correctly
+        console.error(err);
+        return res.status(400).json({ error: "Friend request already exists."});
+      }
+      console.error(err);
+      return res.status(500).json({ error: "Error sending friend request."});
+  }
+});
+
+//accept request
+app.post('/friends/accept', async (req, res) => {
+  const recipientId = getCurrentUserId(req);
+  const { senderId } = req.body;
+
+  try {
+    const result = await db.query(
+      `UPDATE friends SET status='accepted'
+      WHERE user_id=$1 AND friend_id=$2 AND status='pending'`,
+      [recipientId, senderId]
+    );
+    if(result.rowCount === 0) {
+      return res.status(400).json({ error: 'Request not found.'});
+    }
+    res.json({ message: 'Friend request accepted!'});
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Error accepting friend request.'});
+  }
+});
+
+//reject request
+app.post('/friends/reject', async (req, res) => {
+  const recipientId = getCurrentUserId(req);
+  const { senderId } = req.body;
+
+  try {
+    const result = await db.query(
+      `DELETE FROM friends
+      WHERE user_id=$1 AND friend_id=$2 AND status='pending'`,
+      [recipientId, senderId]
+    );
+
+    if(result.rowCount === 0){
+       return res.status(400).json({ error: 'Request not found.'});
+    }
+
+    res.json({message: 'Friend request declined.'});
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Error declining friend request.'});
+  }
+});
+
+//get friends
+app.get('/friends', async (req, res) => {
+  const currentUserId = getCurrentUserId(req);
+
+  try{
+    const result = await db.query(
+      `SELECT * FROM friends
+      WHERE status='accepted'
+      AND ($1 IN (user_id, friend_id))`,
+      [currentUserId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Error fetching friends list.'});
+  }
+});
+
+//get pending requests
+
+app.get('/friends', async (req, res) => {
+  const currentUserId = getCurrentUserId(req);
+
+  try{
+    const result = await db.query(
+      `SELECT * FROM friends
+      WHERE status='pending'
+      AND friend_id=$1`,
+      [currentUserId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Error fetching pending friend requests.'});
+  }
+});
+
+// remove a friend
+app.post('/friends/remove', async (req, res) => {
+  const currentUserId = getCurrentUserId(req);
+  const { friendId } = req.body;
+
+  try {
+    const result = await db.query(
+      `DELETE FROM friends
+       WHERE ((user_id=$1 AND friend_id=$2) OR (user_id=$2 AND friend_id=$1))
+         AND status='accepted'`,
+      [currentUserId, friendId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(400).json({ error: 'Friend not found.' });
+    }
+
+    res.json({ message: 'Friend removed successfully.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error removing friend.' });
+  }
+});
+
+//end of friend request funcitonality
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is listening on port ${PORT}`);
