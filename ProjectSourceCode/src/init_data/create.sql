@@ -12,10 +12,10 @@ CREATE TABLE IF NOT EXISTS users (
 -- Posts Table
 CREATE TABLE IF NOT EXISTS posts (
   id SERIAL PRIMARY KEY,
-  user_id INT REFERENCES users(id) ON DELETE CASCADE,
-  amount NUMERIC(10,2),
-  category VARCHAR(50),
-  description TEXT,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount NUMERIC(10,2) NOT NULL,
+  category VARCHAR(50) NOT NULL CHECK (TRIM(category) !=''),
+  description TEXT NOT NULL CHECK (TRIM(description) !=''),
   created_at TIMESTAMP DEFAULT NOW()
 );
 
