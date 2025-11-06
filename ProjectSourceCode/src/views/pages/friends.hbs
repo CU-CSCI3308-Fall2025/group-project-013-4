@@ -1,0 +1,46 @@
+{{!-- not sure if we want this as a modal/popup later but for now I am making a separate page to test functionality --}}
+{{> header isFriends=true }}
+
+<main class="main-container friends-container">
+  <div class="content-grid">
+    <aside class="sidebar">
+      <div class="card">
+        <div class="card-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <path d="M16 3.128a4 4 0 0 1 0 7.744"/>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+            <circle cx="9" cy="7" r="4"/>
+          </svg>
+          <h2>Your Friends</h2>
+        </div>
+        <div class="leaders-list" id="friendsList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
+            <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+          </svg>
+          <h2>Pending Requests</h2>
+        </div>
+        <div class="leaders-list" id="pendingList"></div>
+      </div>
+    </aside>
+
+    <section class="feed">
+      <div class="feed-header">
+        <h1>Friends</h1>
+        <p>Manage your friends and pending requests</p>
+            <input type="text" id="friendSearch" placeholder="Search for friends...">
+            <div id="searchResults"></div>
+      </div>
+      <div class="posts-container">
+        <p>[placeholder - view friends' posts here]</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+{{> footer year=year }}

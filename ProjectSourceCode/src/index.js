@@ -115,6 +115,15 @@ app.get('/logout', (req, res) => {
   });
 });
 
+app.get('/friends', protect, (req, res) => {
+  res.render('pages/friends', { 
+    user: req.user,
+    isFriends: true,
+    title: 'Friends',
+    year: new Date().getFullYear()
+  });
+});
+
 app.post('/api/auth/register', async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -192,12 +201,14 @@ app.get('/api/auth/me', protect, async (req, res) => {
 
 //friend request functionality starts here:
 
-function getCurrentUserId(req){
+function getCurrentUserId(req) {
+  if (!req.user) throw new Error('User not authenticated');
   return req.user.id;
 }
 
+
 //send request
-app.post('/friends/request', async (req, res) => {
+app.post('/api/friends/request', protect, async (req, res) => {
   const senderId = getCurrentUserId(req);
   const { recipientId } = req.body;
 
@@ -206,10 +217,10 @@ app.post('/friends/request', async (req, res) => {
   }
 
   //check to see if the sender has already been sent a request by the recipient
-  const duplicateRequest = await db.query(
+  const duplicateRequest = await pool.query(
     `SELECT * FROM friends
     WHERE (user_id=$2 AND friend_id=$1)`,
-    [senderId, friendId]
+    [senderId, recipientId]
   );
 
   if(duplicateRequest.rowCount > 0){
@@ -217,7 +228,7 @@ app.post('/friends/request', async (req, res) => {
   }
 
   try {
-    await db.query(
+    await pool.query(
       `INSERT INTO friends (user_id, friend_id) VALUES ($1, $2)`,
       [senderId, recipientId]
     );
@@ -233,12 +244,12 @@ app.post('/friends/request', async (req, res) => {
 });
 
 //accept request
-app.post('/friends/accept', async (req, res) => {
+app.post('/api/friends/accept', protect, async (req, res) => {
   const recipientId = getCurrentUserId(req);
   const { senderId } = req.body;
 
   try {
-    const result = await db.query(
+    const result = await pool.query(
       `UPDATE friends SET status='accepted'
       WHERE user_id=$1 AND friend_id=$2 AND status='pending'`,
       [recipientId, senderId]
@@ -254,12 +265,12 @@ app.post('/friends/accept', async (req, res) => {
 });
 
 //reject request
-app.post('/friends/reject', async (req, res) => {
+app.post('/api/friends/reject', protect, async (req, res) => {
   const recipientId = getCurrentUserId(req);
   const { senderId } = req.body;
 
   try {
-    const result = await db.query(
+    const result = await pool.query(
       `DELETE FROM friends
       WHERE user_id=$1 AND friend_id=$2 AND status='pending'`,
       [recipientId, senderId]
@@ -277,14 +288,17 @@ app.post('/friends/reject', async (req, res) => {
 });
 
 //get friends
-app.get('/friends', async (req, res) => {
+app.get('/api/friends', protect, async (req, res) => {
   const currentUserId = getCurrentUserId(req);
 
   try{
-    const result = await db.query(
-      `SELECT * FROM friends
-      WHERE status='accepted'
-      AND ($1 IN (user_id, friend_id))`,
+    const result = await pool.query(
+      `SELECT u.id, u.username
+       FROM friends f
+       JOIN users u ON (u.id = f.user_id OR u.id = f.friend_id)
+       WHERE f.status = 'accepted'
+         AND u.id <> $1
+         AND ($1 = f.user_id OR $1 = f.friend_id)`,
       [currentUserId]
     );
     res.json(result.rows);
@@ -296,14 +310,16 @@ app.get('/friends', async (req, res) => {
 
 //get pending requests
 
-app.get('/friends', async (req, res) => {
+app.get('/api/friends/pending', protect, async (req, res) => {
   const currentUserId = getCurrentUserId(req);
 
   try{
-    const result = await db.query(
-      `SELECT * FROM friends
-      WHERE status='pending'
-      AND friend_id=$1`,
+    const result = await pool.query(
+      `SELECT f.id, u.id as sender_id, u.username
+       FROM friends f
+       JOIN users u ON u.id = f.user_id
+       WHERE f.status = 'pending'
+         AND f.friend_id = $1`,
       [currentUserId]
     );
     res.json(result.rows);
@@ -314,12 +330,12 @@ app.get('/friends', async (req, res) => {
 });
 
 // remove a friend
-app.post('/friends/remove', async (req, res) => {
+app.post('/api/friends/remove', protect, async (req, res) => {
   const currentUserId = getCurrentUserId(req);
   const { friendId } = req.body;
 
   try {
-    const result = await db.query(
+    const result = await pool.query(
       `DELETE FROM friends
        WHERE ((user_id=$1 AND friend_id=$2) OR (user_id=$2 AND friend_id=$1))
          AND status='accepted'`,
@@ -337,9 +353,39 @@ app.post('/friends/remove', async (req, res) => {
   }
 });
 
+//search for friends by username
+app.get('/api/friends/search', protect, async (req, res) => {
+  const currentUserId = getCurrentUserId(req);
+  const query = req.query.query;
+
+  if (!query) {
+    return res.status(400).json({ error: 'Query is required' });
+  }
+
+  try {
+    // Adjust table/column names to match your database
+    const result = await pool.query(
+      `SELECT id, username 
+       FROM users
+       WHERE username ILIKE $1
+       AND id <> $2
+       LIMIT 10`,
+      [`%${query}%`, currentUserId]
+    ); //make it so that you cant look up friends you already have
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error searching users.' });
+  }
+});
+
+
 //end of friend request funcitonality
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is listening on port ${PORT}`);
 });
+
+
