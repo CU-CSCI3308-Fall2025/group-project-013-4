@@ -1,7 +1,7 @@
 // ********************** initialize server **********************************
 const server = require('../src/index');
 
-// ********************** import iibraries ***********************************
+// ********************** import libraries ***********************************
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const { Pool } = require('pg');
@@ -37,7 +37,7 @@ async function waitForDatabase(attempts = 5, delay = 1000) {
   }
 }
 
-// ********************** default welcome message ****************************
+// ********************** default welcome test ****************************
 describe('Server!', () => {
   it('Returns the default welcome message', async () => {
     const res = await chai.request(server).get('/welcome');
@@ -47,85 +47,90 @@ describe('Server!', () => {
   });
 });
 
-// ***********************  2 unit testcases **************************
-describe('Register API', () => {
+// *********************** register and login test **************************
+describe('Auth APIs', () => {
   before(async function () {
     this.timeout(15000);
     await waitForDatabase();
   });
 
-  it('Positive: creates a new account with valid details', async function () {
-    this.timeout(15000);
-    const uniqueSuffix = Date.now();
-    const payload = {
-      username: `lab10_user_${uniqueSuffix}`,
-      email: `lab10_${uniqueSuffix}@example.com`,
-      password: 'StrongPass!23'
-    };
+  describe('Register API', () => {
+    it('Positive: creates a new account with valid details', async function () {
+      this.timeout(15000);
+      const uniqueSuffix = Date.now();
+      const payload = {
+        username: `lab10_user_${uniqueSuffix}`,
+        email: `lab10_${uniqueSuffix}@example.com`,
+        password: 'StrongPass!23'
+      };
 
-    const res = await chai.request(server).post('/api/auth/register').send(payload);
+      const res = await chai.request(server).post('/api/auth/register').send(payload);
 
-    expect(res).to.have.status(201);
-    expect(res.body).to.include.keys('id', 'username', 'email', 'token');
-    expect(res.body.username).to.equal(payload.username);
-    expect(res.body.email).to.equal(payload.email);
+      expect(res).to.have.status(201);
+      expect(res.body).to.include.keys('id', 'username', 'email', 'token');
+      expect(res.body.username).to.equal(payload.username);
+      expect(res.body.email).to.equal(payload.email);
 
-    await pool.query('DELETE FROM users WHERE email = $1', [payload.email]);
+      await pool.query('DELETE FROM users WHERE email = $1', [payload.email]);
+    });
+
+    it('Negative: rejects requests missing required fields', async function () {
+      this.timeout(10000);
+      const res = await chai
+        .request(server)
+        .post('/api/auth/register')
+        .send({ email: 'invalid@example.com' });
+
+      expect(res).to.have.status(400);
+      expect(res.body).to.have.property('message', 'Please fill all fields');
+    });
   });
 
-  it('Negative: rejects requests missing required fields', async function () {
-    this.timeout(10000);
-    const res = await chai
-      .request(server)
-      .post('/api/auth/register')
-      .send({ email: 'invalid@example.com' });
-
-    expect(res).to.have.status(400);
-    expect(res.body).to.have.property('message', 'Please fill all fields');
-  });
-});
-// *********************** 2 extra credit testcases **************************
-describe('Login API', () => {
-  before(async function () {
-    this.timeout(15000);
-    await waitForDatabase();
-  });
-
-  it('Positive: authenticates a user with valid credentials', async function () {
-    this.timeout(15000);
-    const uniqueSuffix = Date.now();
+  describe('Login API', () => {
+    let createdUser;
     const password = 'LoginPass!23';
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const userResult = await pool.query(
-      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email',
-      [`lab10_login_${uniqueSuffix}`, `lab10_login_${uniqueSuffix}@example.com`, hashedPassword]
-    );
 
-    const user = userResult.rows[0];
+    beforeEach(async () => {
+      const uniqueSuffix = Date.now();
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const { rows } = await pool.query(
+        'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email',
+        [`lab10_login_${uniqueSuffix}`, `lab10_login_${uniqueSuffix}@example.com`, hashedPassword]
+      );
+      createdUser = rows[0];
+    });
 
-    const res = await chai
-      .request(server)
-      .post('/api/auth/login')
-      .send({ email: user.email, password });
+    afterEach(async () => {
+      if (createdUser) {
+        await pool.query('DELETE FROM users WHERE id = $1', [createdUser.id]);
+        createdUser = null;
+      }
+    });
 
-    expect(res).to.have.status(200);
-    expect(res.body).to.include.keys('id', 'username', 'email', 'token');
-    expect(res.body.id).to.equal(user.id);
-    expect(res.body.username).to.equal(user.username);
-    expect(res.body.email).to.equal(user.email);
+    it('Positive: authenticates a user with valid credentials', async function () {
+      this.timeout(15000);
+      const res = await chai
+        .request(server)
+        .post('/api/auth/login')
+        .send({ email: createdUser.email, password });
 
-    await pool.query('DELETE FROM users WHERE id = $1', [user.id]);
-  });
+      expect(res).to.have.status(200);
+      expect(res.body).to.include.keys('id', 'username', 'email', 'token');
+      expect(res.body.id).to.equal(createdUser.id);
+      expect(res.body.username).to.equal(createdUser.username);
+      expect(res.body.email).to.equal(createdUser.email);
+    });
 
-  it('Negative: rejects requests with incorrect credentials', async function () {
-    this.timeout(10000);
-    const res = await chai
-      .request(server)
-      .post('/api/auth/login')
-      .send({ email: 'doesnotexist@example.com', password: 'WrongPass!23' });
+    it('Negative: rejects requests with incorrect credentials', async function () {
+      this.timeout(10000);
+      const res = await chai
+        .request(server)
+        .post('/api/auth/login')
+        .send({ email: 'doesnotexist@example.com', password: 'WrongPass!23' });
 
-    expect(res).to.have.status(400);
-    expect(res.body).to.have.property('message', 'Invalid credentials');
+      expect(res).to.have.status(400);
+      expect(res.body).to.have.property('message', 'Invalid credentials');
+    });
   });
 });
 
