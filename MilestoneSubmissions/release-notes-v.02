@@ -1,0 +1,14 @@
+## What's Changed
+* Database feature branch by @Kishore90820 in https://github.com/CU-CSCI3308-Fall2025/group-project-013-4/pull/40
+* Create release-notes-v0,1 by @thetopham in https://github.com/CU-CSCI3308-Fall2025/group-project-013-4/pull/39
+* Update logo w/correct color and gradient by @elliebell1 in https://github.com/CU-CSCI3308-Fall2025/group-project-013-4/pull/50
+* HTML to HBS by @AJohnson-13 in https://github.com/CU-CSCI3308-Fall2025/group-project-013-4/pull/52
+* Reorganize by @thetopham in https://github.com/CU-CSCI3308-Fall2025/group-project-013-4/pull/53
+* Update api-use-docs-and-user-validation.md by @harrieha in https://github.com/CU-CSCI3308-Fall2025/group-project-013-4/pull/55
+* Fix: make WalletWatch logo clickable and clean CSS syntax by @Kishore90820 in https://github.com/CU-CSCI3308-Fall2025/group-project-013-4/pull/56
+* added validation so user cannot add null or whitespace only posts by @harrieha in https://github.com/CU-CSCI3308-Fall2025/group-project-013-4/pull/64
+
+## New Contributors
+* @harrieha made their first contribution in https://github.com/CU-CSCI3308-Fall2025/group-project-013-4/pull/55
+
+**Full Changelog**: https://github.com/CU-CSCI3308-Fall2025/group-project-013-4/compare/v0.1...v0.2
