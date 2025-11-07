@@ -22,7 +22,7 @@ services:
     working_dir: /app
     volumes:
       - ./:/app
-    command: sh -c "npm install && npm run dev"
+    command: sh -c "npm run testandrun"
     ports:
       - '3000:3000'
     environment:
@@ -31,6 +31,7 @@ services:
       DB_USER: walletwatch_user
       DB_PASS: walletwatch_pass
       DB_NAME: walletwatch
+      DB_PORT: 5432
       SESSION_SECRET: keyboardcat
       JWT_SECRET: supersecretjwt
     depends_on:
