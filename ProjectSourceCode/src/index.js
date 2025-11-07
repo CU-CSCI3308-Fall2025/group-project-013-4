@@ -12,6 +12,7 @@ const { Pool } = require('pg');
 dotenv.config();
 
 const app = express();
+// app.set('etag', false);
 
 const hbs = exphbs.create({
   extname: 'hbs',
@@ -250,8 +251,10 @@ app.post('/api/friends/accept', protect, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `UPDATE friends SET status='accepted'
-      WHERE user_id=$1 AND friend_id=$2 AND status='pending'`,
+      `UPDATE friends
+      SET status = 'accepted'
+      WHERE ((user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1))
+      AND status = 'pending';`,
       [recipientId, senderId]
     );
     if(result.rowCount === 0) {
@@ -262,7 +265,7 @@ app.post('/api/friends/accept', protect, async (req, res) => {
       console.error(err);
       res.status(500).json({ error: 'Error accepting friend request.'});
   }
-});
+}); //not working
 
 //reject request
 app.post('/api/friends/reject', protect, async (req, res) => {
@@ -272,7 +275,8 @@ app.post('/api/friends/reject', protect, async (req, res) => {
   try {
     const result = await pool.query(
       `DELETE FROM friends
-      WHERE user_id=$1 AND friend_id=$2 AND status='pending'`,
+      WHERE ((user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1))
+      AND status = 'pending';`,
       [recipientId, senderId]
     );
 
@@ -285,10 +289,12 @@ app.post('/api/friends/reject', protect, async (req, res) => {
       console.error(err);
       res.status(500).json({ error: 'Error declining friend request.'});
   }
-});
+}); //not working
 
 //get friends
 app.get('/api/friends', protect, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.removeHeader('ETag');
   const currentUserId = getCurrentUserId(req);
 
   try{
@@ -306,11 +312,12 @@ app.get('/api/friends', protect, async (req, res) => {
       console.error(err);
       res.status(500).json({ error: 'Error fetching friends list.'});
   }
-});
+}); //verified working
 
 //get pending requests
-
 app.get('/api/friends/pending', protect, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.removeHeader('ETag');
   const currentUserId = getCurrentUserId(req);
 
   try{
@@ -327,7 +334,7 @@ app.get('/api/friends/pending', protect, async (req, res) => {
       console.error(err);
       res.status(500).json({ error: 'Error fetching pending friend requests.'});
   }
-});
+}); //verified working
 
 // remove a friend
 app.post('/api/friends/remove', protect, async (req, res) => {
@@ -351,7 +358,7 @@ app.post('/api/friends/remove', protect, async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Error removing friend.' });
   }
-});
+}); //need to implement in front end
 
 //search for friends by username
 app.get('/api/friends/search', protect, async (req, res) => {
@@ -363,7 +370,6 @@ app.get('/api/friends/search', protect, async (req, res) => {
   }
 
   try {
-    // Adjust table/column names to match your database
     const result = await pool.query(
       `SELECT id, username 
        FROM users
@@ -380,9 +386,7 @@ app.get('/api/friends/search', protect, async (req, res) => {
   }
 });
 
-
 //end of friend request funcitonality
-
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is listening on port ${PORT}`);

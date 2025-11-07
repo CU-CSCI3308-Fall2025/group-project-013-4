@@ -342,7 +342,7 @@ async function renderFriends() {
     div.textContent = friend.username;
     friendsList.appendChild(div);
   });
-}
+} //working
 
 async function renderPendingRequests() {
   const pendingList = document.getElementById('pendingList');
@@ -367,7 +367,7 @@ async function renderPendingRequests() {
     acceptBtn.textContent = 'Accept';
     acceptBtn.classList.add('accept-btn');
     acceptBtn.addEventListener('click', async () => {
-      await acceptFriendRequest(req.id);
+      await acceptFriendRequest(req.sender_id);
       await renderFriends();
       await renderPendingRequests();
     });
@@ -384,18 +384,19 @@ async function renderPendingRequests() {
 
     pendingList.appendChild(div);
   });
-}
+} //working
 
 // --- API calls ---
-async function sendFriendRequest(friendId) {
+async function sendFriendRequest(recipientId) {
   return fetch('/api/friends/request', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ friendId })
+    body: JSON.stringify({ recipientId: recipientId })
   })
   .then(res => res.json())
   .catch(console.error);
-}
+} //verified working
+
 async function acceptFriendRequest(senderId) {
   return fetch('/api/friends/accept', {
     method: 'POST',
@@ -404,7 +405,8 @@ async function acceptFriendRequest(senderId) {
   })
     .then(res => res.json())
     .catch(console.error);
-}
+} //NOT working
+
 async function declineFriendRequest(senderId) {
   return fetch('/api/friends/reject', {
     method: 'POST',
@@ -413,7 +415,8 @@ async function declineFriendRequest(senderId) {
   })
     .then(res => res.json())
     .catch(console.error);
-}
+} //NOT working
+
 async function listFriends() {
   try {
     const res = await fetch('/api/friends');
@@ -423,7 +426,8 @@ async function listFriends() {
     console.error(err);
     return [];
   }
-}
+} //verified working
+
 async function listPendingRequests() {
   try {
     const res = await fetch('/api/friends/pending');
@@ -433,7 +437,7 @@ async function listPendingRequests() {
     console.error(err);
     return [];
   }
-}
+} //verified working
 
 async function searchUsers(query) {
   try {
@@ -448,7 +452,7 @@ async function searchUsers(query) {
     console.error(err);
     return [];
   }
-}
+} //add styling
 
 // --- Search setup ---
 function setupSearch() {
@@ -495,7 +499,9 @@ if (searchInput && resultsList) {
     }, 300);
   });
 }
-}
+} //add styling
+
+//need to implement being able to remove a friend and like clicking on a friends page to get info about them
 
 
 
