@@ -79,6 +79,10 @@ const protect = (req, res, next) => {
   }
 };
 
+app.get('/welcome', (req, res) => {
+  res.json({ status: 'success', message: 'Welcome!' });
+});
+
 app.get('/', (req, res) => {
   res.render('pages/home', {
     title: 'Home',
@@ -191,6 +195,8 @@ app.get('/api/auth/me', protect, async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server is listening on port ${PORT}`);
 });
+
+module.exports = server;
