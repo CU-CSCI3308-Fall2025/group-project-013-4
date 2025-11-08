@@ -115,6 +115,15 @@ app.get('/logout', (req, res) => {
   });
 });
 
+//transaction route here 
+app.get('/addtransaction', (req, res) => {
+  //res.send('Transaction page works!'); testing if route is working
+  res.render('pages/transaction', {
+    isAddTransaction: true,
+    year: new Date().getFullYear()
+  });
+});
+
 app.post('/api/auth/register', async (req, res) => {
   const { username, email, password } = req.body;
 
