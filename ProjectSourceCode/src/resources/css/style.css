@@ -797,56 +797,272 @@ input.valid + .input-feedback {
   color: #b91c1c;
 }
 
+transaction-page {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.transaction-page h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.transaction-page h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 1.5rem;
+}
+
+/* Transaction Form */
 .transaction-form {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  max-width: 500px;
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
 }
 
 .transaction-form .form-group {
-  margin-bottom: 1rem;
-  display: flex;
-  flex-direction: column;
+    margin-bottom: 1.5rem;
 }
 
+.transaction-form .form-group label {
+    display: block;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.transaction-form input[type="number"],
+.transaction-form input[type="datetime-local"],
+.transaction-form select,
+.transaction-form textarea {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    color: #1e293b;
+    transition: all 0.2s;
+    font-family: inherit;
+    background: white;
+}
+
+.transaction-form input:focus,
+.transaction-form select:focus,
+.transaction-form textarea:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.transaction-form input:hover,
+.transaction-form select:hover,
+.transaction-form textarea:hover {
+    border-color: #cbd5e1;
+}
+
+.transaction-form textarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+}
+
+.transaction-form select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 3rem;
+}
+
+.transaction-form .btn-primary {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 1rem;
+    font-size: 1.05rem;
+}
+
+/* Divider */
+.transaction-page hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #e2e8f0, transparent);
+    margin: 3rem 0;
+}
+
+/* Transactions List */
 .transactions-list {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .transaction-card {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
-  padding: 1rem;
-  display: flex;
-  justify-content: space-between;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s;
 }
 
-.transaction-amount {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #dc2626;
+.transaction-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.transaction-details {
+    flex: 1;
 }
 
 .transaction-category {
-  font-size: 0.85rem;
-  color: #64748b;
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #059669;
+    background: #dcfce7;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .transaction-desc {
-  font-size: 0.9rem;
-  color: #475569;
+    font-size: 1rem;
+    color: #475569;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
 }
 
 .transaction-date {
-  font-size: 0.75rem;
-  color: #94a3b8;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
+.transaction-date::before {
+    content: "📅";
+    font-size: 0.85rem;
+}
+
+.transaction-amount-section {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.transaction-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #dc2626;
+    margin-bottom: 0.25rem;
+}
+
+.transaction-amount::before {
+    content: "-$";
+}
+
+/* Empty state */
+.transactions-list:empty::after {
+    content: "No transactions yet. Add your first expense above! 💰";
+    display: block;
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #94a3b8;
+    font-size: 1rem;
+    background: white;
+    border: 2px dashed #e2e8f0;
+    border-radius: 0.75rem;
+}
+
+/* Category color variations */
+.transaction-card[data-category="Food"] .transaction-category {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.transaction-card[data-category="Groceries"] .transaction-category {
+    background: #dcfce7;
+    color: #059669;
+}
+
+.transaction-card[data-category="Transportation"] .transaction-category {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.transaction-card[data-category="Shopping"] .transaction-category {
+    background: #fce7f3;
+    color: #be185d;
+}
+
+.transaction-card[data-category="Entertainment"] .transaction-category {
+    background: #ede9fe;
+    color: #6b21a8;
+}
+
+.transaction-card[data-category="Bills"] .transaction-category {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.transaction-card[data-category="Health"] .transaction-category {
+    background: #ccfbf1;
+    color: #0f766e;
+}
+
+.transaction-card[data-category="Other"] .transaction-category {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .transaction-page h1 {
+        font-size: 1.5rem;
+    }
+
+    .transaction-form {
+        padding: 1.5rem;
+    }
+
+    .transaction-card {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .transaction-amount-section {
+        align-items: flex-start;
+    }
+}
+
+/* Add some animation when transactions are added */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.transaction-card {
+    animation: slideIn 0.3s ease;
+}

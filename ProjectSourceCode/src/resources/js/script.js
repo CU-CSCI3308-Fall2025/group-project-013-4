@@ -328,41 +328,56 @@ async function fetchTransactions() {
   }
 }
 
+async function loadTransactions() {
+  const data = await fetchTransactions();
+  renderTransactions(data);
+}
+
 function renderTransactions(transactions) {
   const container = document.getElementById('transactionsList');
   if (!container) return;
 
   container.innerHTML = '';
 
-  if (transactions.length === 0) {
-    container.innerHTML = `<p>No expenses yet. Add your first one above!</p>`;
-    return;
+  if (!Array.isArray(transactions) || transactions.length === 0) {
+    return; // CSS empty state handles it
   }
 
   transactions.forEach(t => {
-    const dateStr = new Date(t.created_at).toLocaleString();
-    const amount = Number(t.amount);  // ✅ Convert to number
+    // ✅ SAFELY PARSE category 
+    const category = t.category ? String(t.category) : "Other";
 
-    const html = `
-      <div class="transaction-card">
-        <div class="transaction-left">
-          <div class="transaction-amount">$${amount.toFixed(2)}</div>
-          <div class="transaction-category">${t.category}</div>
-        </div>
-        <div class="transaction-right">
-          <div class="transaction-desc">${t.description || ''}</div>
-          <div class="transaction-date">${dateStr}</div>
-        </div>
+    // ✅ SAFELY PARSE amount
+    const amount = Number(t.amount) || 0;
+
+    // ✅ SAFELY PARSE date
+    let dateStr = "Unknown date";
+    try {
+      dateStr = new Date(t.created_at).toLocaleString();
+    } catch (e) {
+      console.warn("Invalid date:", t.created_at);
+    }
+
+    const card = document.createElement('div');
+    card.className = 'transaction-card';
+    card.setAttribute('data-category', category);
+
+    card.innerHTML = `
+      <div class="transaction-details">
+        <span class="transaction-category">${category.toUpperCase()}</span>
+        <div class="transaction-desc">${t.description || 'No description'}</div>
+        <div class="transaction-date">${dateStr}</div>
+      </div>
+
+      <div class="transaction-amount-section">
+        <div class="transaction-amount">${amount.toFixed(2)}</div>
       </div>
     `;
-    container.insertAdjacentHTML('beforeend', html);
+
+    container.appendChild(card);
   });
 }
 
-async function loadTransactions() {
-  const data = await fetchTransactions();
-  renderTransactions(data);
-}
 
 // Handle new transaction submission
 const transactionForm = document.getElementById('transactionForm');
