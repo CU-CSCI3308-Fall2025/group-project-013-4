@@ -27,7 +27,12 @@ CREATE TABLE IF NOT EXISTS friends (
   status VARCHAR(10) DEFAULT 'pending'  -- pending | accepted
 );
 
--- Optional test user
-INSERT INTO users (username, email, password_hash)
-VALUES ('testuser', 'test@example.com', 'placeholder')
-ON CONFLICT DO NOTHING;
+-- Transactions Table (Expenses Only)
+CREATE TABLE IF NOT EXISTS transactions (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount NUMERIC(10,2) NOT NULL CHECK (amount > 0),
+  category VARCHAR(50) NOT NULL CHECK (TRIM(category) != ''),
+  description TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);

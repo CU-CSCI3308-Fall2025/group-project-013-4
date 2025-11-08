@@ -199,6 +199,47 @@ app.get('/api/auth/me', protect, async (req, res) => {
   }
 });
 
+// Create a new transaction
+app.post('/api/transactions', protect, async (req, res) => {
+  const { amount, category, description, created_at } = req.body;
+
+  if (!amount || !category) {
+    return res.status(400).json({ message: 'Amount and category are required.' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO transactions (user_id, amount, category, description, created_at)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [req.user.id, amount, category, description || '', created_at || new Date()]
+    );
+
+    res.status(201).json(result.rows[0]);
+
+  } catch (error) {
+    console.error('❌ Transaction creation error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get ALL transactions for current user
+app.get('/api/transactions', protect, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM transactions
+       WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [req.user.id]
+    );
+
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error('❌ Transaction fetch error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is listening on port ${PORT}`);

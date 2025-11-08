@@ -310,3 +310,104 @@ function renderPosts() {
     postsContainer.insertAdjacentHTML('beforeend', postHTML);
   });
 }
+
+async function fetchTransactions() {
+  const token = localStorage.getItem('token');
+  if (!token) return [];
+
+  try {
+    const res = await fetch('/api/transactions', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    return await res.json();
+
+  } catch (err) {
+    console.error('Failed to load transactions:', err);
+    return [];
+  }
+}
+
+function renderTransactions(transactions) {
+  const container = document.getElementById('transactionsList');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  if (transactions.length === 0) {
+    container.innerHTML = `<p>No expenses yet. Add your first one above!</p>`;
+    return;
+  }
+
+  transactions.forEach(t => {
+    const dateStr = new Date(t.created_at).toLocaleString();
+    const amount = Number(t.amount);  // ✅ Convert to number
+
+    const html = `
+      <div class="transaction-card">
+        <div class="transaction-left">
+          <div class="transaction-amount">$${amount.toFixed(2)}</div>
+          <div class="transaction-category">${t.category}</div>
+        </div>
+        <div class="transaction-right">
+          <div class="transaction-desc">${t.description || ''}</div>
+          <div class="transaction-date">${dateStr}</div>
+        </div>
+      </div>
+    `;
+    container.insertAdjacentHTML('beforeend', html);
+  });
+}
+
+async function loadTransactions() {
+  const data = await fetchTransactions();
+  renderTransactions(data);
+}
+
+// Handle new transaction submission
+const transactionForm = document.getElementById('transactionForm');
+if (transactionForm) {
+  transactionForm.addEventListener('submit', async event => {
+    event.preventDefault();
+
+    const amount = parseFloat(document.getElementById('amount').value);
+    const category = document.getElementById('category').value;
+    const description = document.getElementById('description').value;
+    const created_at = document.getElementById('created_at').value;
+
+    const token = localStorage.getItem('token');
+
+    try {
+      const res = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          amount,
+          category,
+          description,
+          created_at
+        })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        alert(`Error: ${data.message || data.error}`);
+        return;
+      }
+
+      // Reload after successful add
+      loadTransactions();
+      transactionForm.reset();
+
+    } catch (err) {
+      console.error(err);
+      alert('Failed to add expense.');
+    }
+  });
+
+  // Load the user's transaction history on page load
+  loadTransactions();
+}
