@@ -290,10 +290,14 @@ app.put('/api/transactions/:id', protect, async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
+app.get('/welcome', (req, res) => {
+  res.json({status: 'success', message: 'Welcome!'});
 });
 
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server is listening on port ${PORT}`);
 });
+
+module.exports = server;
