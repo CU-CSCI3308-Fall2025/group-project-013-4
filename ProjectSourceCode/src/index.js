@@ -8,6 +8,7 @@ const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
+app.use('/resources', express.static('resources'));
 
 dotenv.config();
 
@@ -99,6 +100,14 @@ app.get('/login', (req, res) => {
   res.render('pages/login', {
     title: 'Login',
     bodyClass: 'auth-page'
+  });
+});
+
+app.get('/settings', (req, res) => {
+  res.render('pages/settings', {
+    title: 'Settings',
+    isSettings: true,
+    year: new Date().getFullYear()
   });
 });
 

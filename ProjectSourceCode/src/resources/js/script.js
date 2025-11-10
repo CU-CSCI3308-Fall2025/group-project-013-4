@@ -310,3 +310,31 @@ function renderPosts() {
     postsContainer.insertAdjacentHTML('beforeend', postHTML);
   });
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    const link = document.getElementById("theme-style");
+    const toggleBtn = document.getElementById("theme-toggle-btn");
+
+    // Apply saved theme on load
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+        link.href = "/resources/css/style_dark.css";
+    } else {
+        link.href = "/resources/css/style.css";
+    }
+
+    // Toggle theme on button click
+    if (toggleBtn) {
+        toggleBtn.addEventListener("click", () => {
+            const isDark = link.getAttribute("href").includes("style_dark.css");
+
+            if (isDark) {
+                link.href = "/resources/css/style.css";
+                localStorage.setItem("theme", "light");
+            } else {
+                link.href = "/resources/css/style_dark.css";
+                localStorage.setItem("theme", "dark");
+            }
+        });
+    }
+});
