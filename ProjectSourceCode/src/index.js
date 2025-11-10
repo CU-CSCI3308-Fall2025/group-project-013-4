@@ -242,7 +242,7 @@ app.post('/api/friends/request', protect, async (req, res) => {
       console.error(err);
       return res.status(500).json({ error: "Error sending friend request."});
   }
-});
+}); //works
 
 //accept request
 app.post('/api/friends/accept', protect, async (req, res) => {
@@ -265,7 +265,7 @@ app.post('/api/friends/accept', protect, async (req, res) => {
       console.error(err);
       res.status(500).json({ error: 'Error accepting friend request.'});
   }
-}); //not working
+}); //working
 
 //reject request
 app.post('/api/friends/reject', protect, async (req, res) => {
@@ -289,7 +289,7 @@ app.post('/api/friends/reject', protect, async (req, res) => {
       console.error(err);
       res.status(500).json({ error: 'Error declining friend request.'});
   }
-}); //not working
+}); //working
 
 //get friends
 app.get('/api/friends', protect, async (req, res) => {

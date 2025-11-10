@@ -1,4 +1,3 @@
-{{!-- not sure if we want this as a modal/popup later but for now I am making a separate page to test functionality --}}
 {{> header isFriends=true }}
 
 <main class="main-container friends-container">
@@ -33,8 +32,10 @@
       <div class="feed-header">
         <h1>Friends</h1>
         <p>Manage your friends and pending requests</p>
-            <input type="text" id="friendSearch" placeholder="Search for friends...">
-            <div id="searchResults"></div>
+          <form id="friendSearchForm" class="auth-form">
+            <input type="text" id="friendSearch" placeholder="Search for friends by username...">
+          </form>
+          <div id="searchResults"></div>
       </div>
       <div class="posts-container">
         <p>[placeholder - view friends' posts here]</p>
