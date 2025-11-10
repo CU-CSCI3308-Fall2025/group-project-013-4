@@ -290,6 +290,9 @@ app.put('/api/transactions/:id', protect, async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
+
+});
+
 app.get('/welcome', (req, res) => {
   res.json({status: 'success', message: 'Welcome!'});
 });
