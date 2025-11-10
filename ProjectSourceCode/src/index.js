@@ -240,6 +240,59 @@ app.get('/api/transactions', protect, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+//Delete a specific transaction that the user made
+app.delete('/api/transactions/:id', protect, async (req, res) => {
+  const userId = req.user.id;
+  const transactionId = req.params.id;
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM transactions WHERE id = $1 AND user_id = $2 RETURNING *`,
+      [transactionId, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Transaction not found" });
+    }
+
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+//Edit a transaction
+app.put('/api/transactions/:id', protect, async (req, res) => {
+  const userId = req.user.id;
+  const transactionId = req.params.id;
+
+  const { amount, category, description, created_at } = req.body;
+
+  try {
+    const result = await pool.query(`
+      UPDATE transactions
+      SET amount = $1,
+          category = $2,
+          description = $3,
+          created_at = $4
+      WHERE id = $5 AND user_id = $6
+      RETURNING *
+    `, [amount, category, description, created_at, transactionId, userId]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Transaction not found" });
+    }
+
+    res.json(result.rows[0]);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is listening on port ${PORT}`);

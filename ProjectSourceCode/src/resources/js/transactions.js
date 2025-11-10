@@ -19,7 +19,6 @@ async function fetchTransactions() {
   }
 }
 
-// ✅ Render the transactions list
 function renderTransactions(transactions) {
   const container = document.getElementById('transactionsList');
   if (!container) return;
@@ -27,7 +26,7 @@ function renderTransactions(transactions) {
   container.innerHTML = '';
 
   if (!Array.isArray(transactions) || transactions.length === 0) {
-    return; // CSS empty state takes care of it
+    return; // CSS empty state handles it
   }
 
   transactions.forEach(t => {
@@ -47,17 +46,32 @@ function renderTransactions(transactions) {
 
     card.innerHTML = `
       <div class="transaction-details">
-        <span class="transaction-category">${category.toUpperCase()}</span>
-        <div class="transaction-desc">${t.description || 'No description'}</div>
-        <div class="transaction-date">${dateStr}</div>
+          <span class="transaction-category">${category.toUpperCase()}</span>
+          <div class="transaction-desc">${t.description || 'No description'}</div>
+          <div class="transaction-date">${dateStr}</div>
       </div>
 
       <div class="transaction-amount-section">
-        <div class="transaction-amount">${amount.toFixed(2)}</div>
+          <div class="transaction-amount">${amount.toFixed(2)}</div>
+
+          <div class="transaction-actions">
+              <button class="edit-btn" data-id="${t.id}">✏️</button>
+              <button class="delete-btn" data-id="${t.id}">🗑️</button>
+          </div>
       </div>
     `;
 
     container.appendChild(card);
+
+    // ✅ ATTACH LISTENERS INSIDE THE LOOP
+    card.querySelector(".delete-btn").addEventListener("click", () => {
+      deleteTransaction(t.id);
+    });
+
+    card.querySelector(".edit-btn").addEventListener("click", () => {
+      openEditModal(t);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
   });
 }
 
@@ -82,8 +96,16 @@ if (transactionForm) {
     const token = localStorage.getItem('token');
 
     try {
-      const res = await fetch('/api/transactions', {
-        method: 'POST',
+        const editingId = transactionForm.getAttribute("data-editing-id");
+        const isEditing = Boolean(editingId);
+
+        const endpoint = isEditing ? `/api/transactions/${editingId}` : `/api/transactions`;
+
+        const method = isEditing ? "PUT" : "POST";
+
+        const res = await fetch(endpoint, {
+        method,
+
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -115,3 +137,53 @@ if (transactionForm) {
   // ✅ Load the user's transaction history on page load
   loadTransactions();
 }
+
+// DELETE transaction
+async function deleteTransaction(id) {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+
+  if (!confirm("Delete this transaction?")) return;
+
+  const res = await fetch(`/api/transactions/${id}`, {
+    method: "DELETE",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+
+  if (!res.ok) {
+    alert("Failed to delete transaction");
+    return;
+  }
+
+  // ✅ Clear the form if user was editing
+  transactionForm.reset();
+  transactionForm.removeAttribute("data-editing-id");
+  document.getElementById('created_at').value = "";
+
+  // ✅ Reload transaction list
+  loadTransactions();
+}
+
+
+//Inline edit
+function openEditModal(transaction) {
+  // Prefill the form with existing values
+  document.getElementById('amount').value = transaction.amount;
+  document.getElementById('category').value = transaction.category;
+  document.getElementById('description').value = transaction.description;
+  document.getElementById('created_at').value = toDatetimeLocalFormat(transaction.created_at);
+
+
+  // Store the ID so we know this is an update
+  transactionForm.setAttribute("data-editing-id", transaction.id);
+}
+
+//Converts the date of the transaction in a usuable format
+function toDatetimeLocalFormat(timestamp) {
+  const date = new Date(timestamp);
+  const offset = date.getTimezoneOffset();
+  const local = new Date(date.getTime() - offset * 60000);
+  return local.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
+}
+
+
