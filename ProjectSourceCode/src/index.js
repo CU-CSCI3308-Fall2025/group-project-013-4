@@ -115,6 +115,14 @@ app.get('/logout', (req, res) => {
   });
 });
 
+app.get('/settings', (req, res) => {
+  res.render('pages/settings', {
+    title: 'Settings',
+    isSettings: true,
+    year: new Date().getFullYear()
+  });
+});
+
 //transaction route here 
 app.get('/addtransaction', (req, res) => {
   //res.send('Transaction page works!'); testing if route is working
@@ -293,10 +301,42 @@ app.put('/api/transactions/:id', protect, async (req, res) => {
 
 });
 
+// Delete current user's account
+app.delete('/api/auth/delete', protect, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    // Delete the user
+    const result = await pool.query(
+      'DELETE FROM users WHERE id = $1 RETURNING *',
+      [userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Destroy session after deletion
+    req.session.destroy(err => {
+      if (err) console.error('Session destruction error:', err);
+    });
+
+    res.json({ message: 'Account successfully deleted' });
+  } catch (err) {
+    console.error('Account deletion error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
 app.get('/welcome', (req, res) => {
   res.json({status: 'success', message: 'Welcome!'});
 });
 
+console.log('Registered routes:');
+app._router.stack
+  .filter(r => r.route)
+  .map(r => console.log(`${Object.keys(r.route.methods)[0].toUpperCase()} ${r.route.path}`));
 
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {
