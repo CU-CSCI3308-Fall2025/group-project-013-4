@@ -59,6 +59,12 @@ body {
     background-clip: text;
 }
 
+.logo-link:hover {
+  color: #10b981;
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+}
+
 .nav-menu {
     display: flex;
     align-items: center;
@@ -590,7 +596,12 @@ input.valid + .input-feedback {
   color: #10b981;
 }
 
-\n.app-footer {\n  text-align: center;\n  padding: 2rem 1rem;\n  color: #94a3b8;\n  font-size: 0.875rem;\n}
+.app-footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
 
 /* Leaderboard Specific Styles */
 .leaderboard-container {

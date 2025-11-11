@@ -192,7 +192,60 @@ posts(
 - **Logging**: auth events + admin actions (optional)
 
 ## External API Decision
-**Not used in v1.** Barcode/UPC or OpenFDA is misaligned with finance; **Plaid** is closer to purpose but heavy for course scope and introduces sensitive data handling. v1 relies on **manual inputs**: item, category, amount.
+Google Places API is used for location-tagging posts with nearby businesses/places. Barcode/UPC or OpenFDA is misaligned with finance; Plaid is closer to purpose but heavy for course scope and introduces sensitive data handling. Core transaction entry relies on manual inputs: item, category, amount.
+
+---
+
+## Location & Places (Google Places API)
+
+### Overview
+Posts can be tagged with location data. User location is obtained via **HTML5 Geolocation** (client-side), and nearby places are fetched using **Google Places API, Nearby Search (New)** (server-side).
+
+### Data Model
+```sql
+ALTER TABLE posts
+  ADD COLUMN IF NOT EXISTS latitude  NUMERIC(9,6),
+  ADD COLUMN IF NOT EXISTS longitude NUMERIC(9,6),
+  ADD COLUMN IF NOT EXISTS place_id  TEXT,
+  ADD COLUMN IF NOT EXISTS place_name TEXT,
+  ADD COLUMN IF NOT EXISTS address TEXT;
+
+CREATE INDEX IF NOT EXISTS posts_location_idx ON posts (latitude, longitude);
+```
+
+### Getting User Location
+Use browser HTML5 Geolocation API:
+```js
+navigator.geolocation.getCurrentPosition(
+  (position) => {
+    const { latitude, longitude } = position.coords;
+  },
+  (error) => console.error('Location access denied', error)
+);
+```
+
+### Finding Nearby Places
+Send lat/lng to your server, which queries **Google Places API, Nearby Search (New)** and returns matching places within a radius.
+
+**Server endpoint example:**
+```http
+POST /api/v1/places/nearby
+Content-Type: application/json
+
+{
+  "latitude": 40.7128,
+  "longitude": -74.0060,
+  "radius": 500
+}
+```
+
+### External References
+- **Nearby Search (New)**: https://developers.google.com/maps/documentation/places/web-service/nearby-search
+- **Autocomplete (New)**: https://developers.google.com/maps/documentation/places/web-service/place-autocomplete
+- **Place Details (New)**: https://developers.google.com/maps/documentation/places/web-service/place-details
+- **Choose fields (FieldMask)**: https://developers.google.com/maps/documentation/places/web-service/choose-fields
+
+---
 
 ## Appendix A — Sample Validation Schema
 ```json

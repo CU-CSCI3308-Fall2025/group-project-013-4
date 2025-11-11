@@ -12,10 +12,10 @@ CREATE TABLE IF NOT EXISTS users (
 -- Posts Table
 CREATE TABLE IF NOT EXISTS posts (
   id SERIAL PRIMARY KEY,
-  user_id INT REFERENCES users(id) ON DELETE CASCADE,
-  amount NUMERIC(10,2),
-  category VARCHAR(50),
-  description TEXT,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount NUMERIC(10,2) NOT NULL,
+  category VARCHAR(50) NOT NULL CHECK (TRIM(category) !=''),
+  description TEXT NOT NULL CHECK (TRIM(description) !=''),
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -31,7 +31,12 @@ CREATE TABLE IF NOT EXISTS friends (
   CONSTRAINT unique_friendship_pair UNIQUE (user_low, user_high)
 );
 
--- Optional test user
-INSERT INTO users (username, email, password_hash)
-VALUES ('testuser', 'test@example.com', 'placeholder')
-ON CONFLICT DO NOTHING;
+-- Transactions Table (Expenses Only)
+CREATE TABLE IF NOT EXISTS transactions (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount NUMERIC(10,2) NOT NULL CHECK (amount > 0),
+  category VARCHAR(50) NOT NULL CHECK (TRIM(category) != ''),
+  description TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
