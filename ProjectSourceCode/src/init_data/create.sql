@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS friends (
   id SERIAL PRIMARY KEY,
   user_id INT REFERENCES users(id) ON DELETE CASCADE,
   friend_id INT REFERENCES users(id) ON DELETE CASCADE,
-  status VARCHAR(10) DEFAULT 'pending'  -- pending | accepted
+  status VARCHAR(10) DEFAULT 'pending',  -- pending | accepted
   --enforce bidirectional uniqueness
   user_low INT GENERATED ALWAYS AS (LEAST(user_id, friend_id)) STORED,
   user_high INT GENERATED ALWAYS AS (GREATEST(user_id, friend_id)) STORED,
