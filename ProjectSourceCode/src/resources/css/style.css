@@ -35,13 +35,19 @@ body {
 }
 
 .logo-icon {
-    background: linear-gradient(to bottom right, #10b981, #0d9488);
+    /* background: linear-gradient(to bottom right, #10b981, #0d9488);
     padding: 0.5rem;
     border-radius: 0.5rem;
-    color: white;
+    color: white; */
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.logo-img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
 }
 
 .logo-text {
