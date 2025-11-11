@@ -81,6 +81,7 @@ const protect = (req, res, next) => {
 
 // Storage for profile pictures
 const multer = require('multer');
+const fs = require('fs');
 
 const storage = multer.diskStorage({
   destination: path.join(__dirname, 'resources/uploads'),
@@ -92,15 +93,40 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 app.post('/api/auth/upload-profile', protect, upload.single('profile'), async (req, res) => {
-  const filepath = `/resources/uploads/${req.file.filename}`;
+  try {
+    // Get current profile picture path from DB
+    const result = await pool.query(
+      'SELECT profile_picture FROM users WHERE id = $1',
+      [req.user.id]
+    );
 
-  await pool.query(
-    'UPDATE users SET profile_picture = $1 WHERE id = $2',
-    [filepath, req.user.id]
-  );
+    const oldPath = result.rows[0]?.profile_picture;
+    
+    // Delete old file if it exists and is not the default
+    if (oldPath && !oldPath.includes('PFP_Default.jpeg')) {
+      // Convert URL path to filesystem path
+      const fullPath = path.join(__dirname, oldPath.replace(/^\//, '')); // remove leading slash
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath); // synchronous deletion
+        console.log('Old profile picture deleted:', fullPath);
+      }
+    }
 
-  res.json({ message: 'Uploaded', url: filepath });
+    // Save new profile picture path
+    const newFilePath = `/resources/uploads/${req.file.filename}`;
+    await pool.query(
+      'UPDATE users SET profile_picture = $1 WHERE id = $2',
+      [newFilePath, req.user.id]
+    );
+
+    res.json({ message: 'Uploaded', url: newFilePath });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Profile upload failed' });
+  }
 });
+
 
 app.use(async (req, res, next) => {
   res.locals.user = null; // default for guests

@@ -30,13 +30,13 @@ document.addEventListener('DOMContentLoaded', () => {
           // Update navbar image instantly
           const navProfile = document.querySelector('.nav-profile');
           if (navProfile) navProfile.src = data.url;
-          alert('✅ Profile picture updated!');
+          alert('Profile picture updated!');
         } else {
-          alert(`⚠️ ${data.message || 'Upload failed'}`);
+          alert(`${data.message || 'Upload failed'}`);
         }
       } catch (err) {
         console.error(err);
-        alert('⚠️ Something went wrong. Try again later.');
+        alert('Something went wrong. Try again later.');
       }
     });
   }
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const deleteAccountBtn = document.getElementById('Delete_Account');
   if (deleteAccountBtn) {
     deleteAccountBtn.addEventListener('click', async () => {
-      const confirmDelete = confirm('⚠️ Are you sure you want to delete your account? This cannot be undone.');
+      const confirmDelete = confirm('Are you sure you want to delete your account? This cannot be undone.');
       if (!confirmDelete) return;
 
       const token = localStorage.getItem('token');
@@ -62,15 +62,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await response.json().catch(() => ({}));
 
         if (response.ok) {
-          alert('✅ Your account has been deleted.');
+          alert('Your account has been deleted.');
           localStorage.removeItem('token');
           window.location.href = '/register';
         } else {
-          alert(`⚠️ ${data.message || 'Could not delete account'}`);
+          alert(`${data.message || 'Could not delete account'}`);
         }
       } catch (err) {
         console.error(err);
-        alert('⚠️ Something went wrong. Try again later.');
+        alert('Something went wrong. Try again later.');
       }
     });
   }
