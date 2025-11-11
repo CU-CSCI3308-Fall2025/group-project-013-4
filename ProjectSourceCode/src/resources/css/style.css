@@ -796,3 +796,12 @@ input.valid + .input-feedback {
   background: rgba(239, 68, 68, 0.1);
   color: #b91c1c;
 }
+
+.nav-profile {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid #fff;
+}

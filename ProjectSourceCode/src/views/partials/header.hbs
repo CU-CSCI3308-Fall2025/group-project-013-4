@@ -43,10 +43,14 @@
       </a>
       <div class="nav-item dropdown">
         <button class="dropdown-toggle" id="profileDropdown" type="button">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
+          <div class="nav-right">
+            {{#if user}}
+            <img 
+              src="{{#if user.profile_picture}}{{user.profile_picture}}{{else}}/resources/img/PFP_Default.jpeg{{/if}}" 
+              class="nav-profile"
+            />
+            {{/if}}
+          </div>
           <span>Profile</span>
         </button>
         <div class="dropdown-menu" id="profileMenu">

@@ -79,7 +79,55 @@ const protect = (req, res, next) => {
   }
 };
 
-app.get('/', (req, res) => {
+// Storage for profile pictures
+const multer = require('multer');
+
+const storage = multer.diskStorage({
+  destination: path.join(__dirname, 'resources/uploads'),
+  filename: (req, file, cb) => {
+    cb(null, `user_${req.user.id}_${Date.now()}.png`);
+  }
+});
+
+const upload = multer({ storage });
+
+app.post('/api/auth/upload-profile', protect, upload.single('profile'), async (req, res) => {
+  const filepath = `/resources/uploads/${req.file.filename}`;
+
+  await pool.query(
+    'UPDATE users SET profile_picture = $1 WHERE id = $2',
+    [filepath, req.user.id]
+  );
+
+  res.json({ message: 'Uploaded', url: filepath });
+});
+
+app.use(async (req, res, next) => {
+  res.locals.user = null; // default for guests
+
+  try {
+    const token = req.session.token;
+    if (!token) return next();
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "supersecretjwt");
+
+    const result = await pool.query(
+      "SELECT * FROM users WHERE id = $1",
+      [decoded.id]
+    );
+
+    if (result.rows.length > 0) {
+      res.locals.user = result.rows[0];
+    }
+
+    next();
+  } catch (err) {
+    res.locals.user = null;
+    next();
+  }
+});
+
+app.get('/', async (req, res) => {
   res.render('pages/home', {
     title: 'Home',
     isHome: true,
@@ -87,8 +135,8 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/leaderboard', (req, res) => {
-  res.render('pages/leaderboard', {
+app.get('/leaderboard', async (req, res) => {
+res.render('pages/leaderboard', {
     title: 'Leaderboard',
     isLeaderboard: true,
     year: new Date().getFullYear()
@@ -115,8 +163,8 @@ app.get('/logout', (req, res) => {
   });
 });
 
-app.get('/settings', (req, res) => {
-  res.render('pages/settings', {
+app.get('/settings', async (req, res) => {
+res.render('pages/settings', {
     title: 'Settings',
     isSettings: true,
     year: new Date().getFullYear()
@@ -124,8 +172,8 @@ app.get('/settings', (req, res) => {
 });
 
 //transaction route here 
-app.get('/addtransaction', (req, res) => {
-  //res.send('Transaction page works!'); testing if route is working
+app.get('/addtransaction', async (req, res) => {
+//res.send('Transaction page works!'); testing if route is working
   res.render('pages/transaction', {
     isAddTransaction: true,
     year: new Date().getFullYear()
