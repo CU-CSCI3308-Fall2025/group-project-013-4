@@ -199,6 +199,100 @@ app.get('/api/auth/me', protect, async (req, res) => {
   }
 });
 
+// Create a new transaction
+app.post('/api/transactions', protect, async (req, res) => {
+  const { amount, category, description, created_at } = req.body;
+
+  if (!amount || !category) {
+    return res.status(400).json({ message: 'Amount and category are required.' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO transactions (user_id, amount, category, description, created_at)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [req.user.id, amount, category, description || '', created_at || new Date()]
+    );
+
+    res.status(201).json(result.rows[0]);
+
+  } catch (error) {
+    console.error('❌ Transaction creation error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get ALL transactions for current user
+app.get('/api/transactions', protect, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM transactions
+       WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [req.user.id]
+    );
+
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error('❌ Transaction fetch error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+//Delete a specific transaction that the user made
+app.delete('/api/transactions/:id', protect, async (req, res) => {
+  const userId = req.user.id;
+  const transactionId = req.params.id;
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM transactions WHERE id = $1 AND user_id = $2 RETURNING *`,
+      [transactionId, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Transaction not found" });
+    }
+
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+//Edit a transaction
+app.put('/api/transactions/:id', protect, async (req, res) => {
+  const userId = req.user.id;
+  const transactionId = req.params.id;
+
+  const { amount, category, description, created_at } = req.body;
+
+  try {
+    const result = await pool.query(`
+      UPDATE transactions
+      SET amount = $1,
+          category = $2,
+          description = $3,
+          created_at = $4
+      WHERE id = $5 AND user_id = $6
+      RETURNING *
+    `, [amount, category, description, created_at, transactionId, userId]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Transaction not found" });
+    }
+
+    res.json(result.rows[0]);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+
+});
+
 app.get('/welcome', (req, res) => {
   res.json({status: 'success', message: 'Welcome!'});
 });
