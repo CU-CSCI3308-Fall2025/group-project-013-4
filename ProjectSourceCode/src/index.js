@@ -85,8 +85,81 @@ const protect = (req, res, next) => {
   }
 };
 
+// Storage for profile pictures
+const multer = require('multer');
+const fs = require('fs');
 
-app.get('/', (req, res) => {
+const storage = multer.diskStorage({
+  destination: path.join(__dirname, 'resources/uploads'),
+  filename: (req, file, cb) => {
+    cb(null, `user_${req.user.id}_${Date.now()}.png`);
+  }
+});
+
+const upload = multer({ storage });
+
+app.post('/api/auth/upload-profile', protect, upload.single('profile'), async (req, res) => {
+  try {
+    // Get current profile picture path from DB
+    const result = await pool.query(
+      'SELECT profile_picture FROM users WHERE id = $1',
+      [req.user.id]
+    );
+
+    const oldPath = result.rows[0]?.profile_picture;
+    
+    // Delete old file if it exists and is not the default
+    if (oldPath && !oldPath.includes('PFP_Default.jpeg')) {
+      // Convert URL path to filesystem path
+      const fullPath = path.join(__dirname, oldPath.replace(/^\//, '')); // remove leading slash
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath); // synchronous deletion
+        console.log('Old profile picture deleted:', fullPath);
+      }
+    }
+
+    // Save new profile picture path
+    const newFilePath = `/resources/uploads/${req.file.filename}`;
+    await pool.query(
+      'UPDATE users SET profile_picture = $1 WHERE id = $2',
+      [newFilePath, req.user.id]
+    );
+
+    res.json({ message: 'Uploaded', url: newFilePath });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Profile upload failed' });
+  }
+});
+
+
+app.use(async (req, res, next) => {
+  res.locals.user = null; // default for guests
+
+  try {
+    const token = req.session.token;
+    if (!token) return next();
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "supersecretjwt");
+
+    const result = await pool.query(
+      "SELECT * FROM users WHERE id = $1",
+      [decoded.id]
+    );
+
+    if (result.rows.length > 0) {
+      res.locals.user = result.rows[0];
+    }
+
+    next();
+  } catch (err) {
+    res.locals.user = null;
+    next();
+  }
+});
+
+app.get('/', async (req, res) => {
   res.render('pages/home', {
     title: 'Home',
     isHome: true,
@@ -94,8 +167,8 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/leaderboard', (req, res) => {
-  res.render('pages/leaderboard', {
+app.get('/leaderboard', async (req, res) => {
+res.render('pages/leaderboard', {
     title: 'Leaderboard',
     isLeaderboard: true,
     year: new Date().getFullYear()
@@ -122,6 +195,14 @@ app.get('/logout', (req, res) => {
   });
 });
 
+app.get('/settings', async (req, res) => {
+res.render('pages/settings', {
+    title: 'Settings',
+    isSettings: true,
+   year: new Date().getFullYear()
+  });
+});
+  
 // Friends page
 app.get('/friends', protect, (req, res) => {
   res.render('pages/friends', { 
@@ -465,13 +546,42 @@ app.put('/api/transactions/:id', protect, async (req, res) => {
   }
 });
 
-/* ----------------------------- END OF MERGE ----------------------------- */
+// Delete current user's account
+app.delete('/api/auth/delete', protect, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    // Delete the user
+    const result = await pool.query(
+      'DELETE FROM users WHERE id = $1 RETURNING *',
+      [userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Destroy session after deletion
+    req.session.destroy(err => {
+      if (err) console.error('Session destruction error:', err);
+    });
+
+    res.json({ message: 'Account successfully deleted' });
+  } catch (err) {
+    console.error('Account deletion error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 
 app.get('/welcome', (req, res) => {
   res.json({status: 'success', message: 'Welcome!'});
 });
 
+console.log('Registered routes:');
+app._router.stack
+  .filter(r => r.route)
+  .map(r => console.log(`${Object.keys(r.route.methods)[0].toUpperCase()} ${r.route.path}`));
 
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {

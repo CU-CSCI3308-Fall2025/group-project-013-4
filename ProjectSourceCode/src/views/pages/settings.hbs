@@ -1,0 +1,37 @@
+{{> header isSettings=true }}
+
+<main class="main-container">
+
+  <!-- Profile Picture Card -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Profile Picture</h2>
+    </div>
+    <div class="card-content">
+      <input id="profile-upload" type="file" accept="image/*" class="file-input" />
+    </div>
+  </div>
+
+  <!-- Theme Card -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Appearance</h2>
+    </div>
+    <div class="card-content">
+      <button id="theme-toggle-btn" class="btn btn-primary">Toggle Light/Dark Mode</button>
+    </div>
+  </div>
+
+  <!-- Delete Account Card -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Account</h2>
+    </div>
+    <div class="card-content">
+      <button id="Delete_Account" class="btn-danger">Delete Account</button>
+    </div>
+  </div>
+
+</main>
+
+{{> footer year=year }}

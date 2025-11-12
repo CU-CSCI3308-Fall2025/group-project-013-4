@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   avatar TEXT,
   bio TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT NOW(),
+  profile_picture TEXT
 );
 
 -- Posts Table
@@ -40,3 +41,5 @@ CREATE TABLE IF NOT EXISTS transactions (
   description TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Helpfull Testing DB psql -U walletwatch_user -d walletwatch
