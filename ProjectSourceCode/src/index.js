@@ -55,12 +55,15 @@ pool
     console.error('❌ Database connection error:', error.message);
   });
 
-const generateToken = id => jwt.sign({ id }, process.env.JWT_SECRET || 'supersecretjwt', { expiresIn: '2h' });
+const generateToken = id =>
+  jwt.sign({ id }, process.env.JWT_SECRET || 'supersecretjwt', {
+    expiresIn: '2h'
+  });
 
 const protect = (req, res, next) => {
   let token = null;
 
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+  if (req.headers.authorization?.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
   } else if (req.session.token) {
     token = req.session.token;
@@ -71,7 +74,10 @@ const protect = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretjwt');
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'supersecretjwt'
+    );
     req.user = decoded;
     next();
   } catch (error) {
@@ -193,15 +199,25 @@ app.get('/settings', async (req, res) => {
 res.render('pages/settings', {
     title: 'Settings',
     isSettings: true,
+   year: new Date().getFullYear()
+  });
+});
+  
+// Friends page
+app.get('/friends', protect, (req, res) => {
+  res.render('pages/friends', { 
+    user: req.user,
+    isFriends: true,
+    title: 'Friends',
     year: new Date().getFullYear()
   });
 });
 
-//transaction route here 
-app.get('/addtransaction', async (req, res) => {
-//res.send('Transaction page works!'); testing if route is working
+// Add Transaction page
+app.get('/addtransaction', protect, (req, res) => {
   res.render('pages/transaction', {
     isAddTransaction: true,
+    title: 'Add Transaction',
     year: new Date().getFullYear()
   });
 });
@@ -281,13 +297,184 @@ app.get('/api/auth/me', protect, async (req, res) => {
   }
 });
 
-// Create a new transaction
+
+/* ----------------------------- FRIENDS FEATURE ----------------------------- */
+
+function getCurrentUserId(req) {
+  if (!req.user) throw new Error('User not authenticated');
+  return req.user.id;
+}
+
+// SEND FRIEND REQUEST
+app.post('/api/friends/request', protect, async (req, res) => {
+  const senderId = getCurrentUserId(req);
+  const { recipientId } = req.body;
+
+  if (senderId == recipientId) {
+    return res.status(400).json({ error: "You can't friend yourself!" });
+  }
+
+  const duplicateRequest = await pool.query(
+    `SELECT * FROM friends
+     WHERE (user_id=$2 AND friend_id=$1)`,
+    [senderId, recipientId]
+  );
+
+  if (duplicateRequest.rowCount > 0) {
+    return res.status(400).json({ error: 'Friend request already exists or is pending.' });
+  }
+
+  try {
+    await pool.query(
+      `INSERT INTO friends (user_id, friend_id) VALUES ($1, $2)`,
+      [senderId, recipientId]
+    );
+    res.json({ message: 'Friend request sent!' });
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(400).json({ error: "Friend request already exists." });
+    }
+    res.status(500).json({ error: "Error sending friend request." });
+  }
+});
+
+// ACCEPT FRIEND REQUEST
+app.post('/api/friends/accept', protect, async (req, res) => {
+  const recipientId = getCurrentUserId(req);
+  const { senderId } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE friends
+       SET status = 'accepted'
+       WHERE ((user_id=$1 AND friend_id=$2) OR (user_id=$2 AND friend_id=$1))
+       AND status='pending'`,
+      [recipientId, senderId]
+    );
+
+    if (result.rowCount === 0)
+      return res.status(400).json({ error: 'Request not found.' });
+
+    res.json({ message: 'Friend request accepted!' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error accepting friend request.' });
+  }
+});
+
+// REJECT FRIEND REQUEST
+app.post('/api/friends/reject', protect, async (req, res) => {
+  const recipientId = getCurrentUserId(req);
+  const { senderId } = req.body;
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM friends
+       WHERE ((user_id=$1 AND friend_id=$2) OR (user_id=$2 AND friend_id=$1))
+       AND status='pending'`,
+      [recipientId, senderId]
+    );
+
+    if (result.rowCount === 0)
+      return res.status(400).json({ error: 'Request not found.' });
+
+    res.json({ message: 'Friend request declined.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error declining friend request.' });
+  }
+});
+
+// GET FRIENDS LIST
+app.get('/api/friends', protect, async (req, res) => {
+  const currentUserId = getCurrentUserId(req);
+
+  try {
+    const result = await pool.query(
+      `SELECT u.id, u.username
+       FROM friends f
+       JOIN users u ON (u.id=f.user_id OR u.id=f.friend_id)
+       WHERE f.status='accepted'
+       AND u.id <> $1
+       AND ($1=f.user_id OR $1=f.friend_id)`,
+      [currentUserId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Error fetching friends list.' });
+  }
+});
+
+// GET PENDING REQUESTS
+app.get('/api/friends/pending', protect, async (req, res) => {
+  const currentUserId = getCurrentUserId(req);
+
+  try {
+    const result = await pool.query(
+      `SELECT f.id, u.id as sender_id, u.username
+       FROM friends f
+       JOIN users u ON u.id=f.user_id
+       WHERE f.status='pending'
+       AND f.friend_id=$1`,
+      [currentUserId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Error fetching pending friend requests.' });
+  }
+});
+
+// REMOVE FRIEND
+app.post('/api/friends/remove', protect, async (req, res) => {
+  const currentUserId = getCurrentUserId(req);
+  const { friendId } = req.body;
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM friends
+       WHERE ((user_id=$1 AND friend_id=$2) OR (user_id=$2 AND friend_id=$1))
+       AND status='accepted'`,
+      [currentUserId, friendId]
+    );
+
+    if (result.rowCount === 0)
+      return res.status(400).json({ error: 'Friend not found.' });
+
+    res.json({ message: 'Friend removed successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error removing friend.' });
+  }
+});
+
+// SEARCH FRIENDS
+app.get('/api/friends/search', protect, async (req, res) => {
+  const currentUserId = getCurrentUserId(req);
+  const query = req.query.query;
+
+  if (!query)
+    return res.status(400).json({ error: 'Query is required' });
+
+  try {
+    const result = await pool.query(
+      `SELECT id, username
+       FROM users
+       WHERE username ILIKE $1
+       AND id <> $2
+       LIMIT 10`,
+      [`%${query}%`, currentUserId]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Error searching users.' });
+  }
+});
+
+/* ----------------------------- TRANSACTIONS FEATURE ----------------------------- */
+
 app.post('/api/transactions', protect, async (req, res) => {
   const { amount, category, description, created_at } = req.body;
 
-  if (!amount || !category) {
+  if (!amount || !category)
     return res.status(400).json({ message: 'Amount and category are required.' });
-  }
 
   try {
     const result = await pool.query(
@@ -298,81 +485,65 @@ app.post('/api/transactions', protect, async (req, res) => {
     );
 
     res.status(201).json(result.rows[0]);
-
-  } catch (error) {
-    console.error('❌ Transaction creation error:', error.message);
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-// Get ALL transactions for current user
 app.get('/api/transactions', protect, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT * FROM transactions
-       WHERE user_id = $1
+       WHERE user_id=$1
        ORDER BY created_at DESC`,
       [req.user.id]
     );
-
     res.json(result.rows);
-
-  } catch (error) {
-    console.error('❌ Transaction fetch error:', error.message);
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
-//Delete a specific transaction that the user made
+
 app.delete('/api/transactions/:id', protect, async (req, res) => {
+  const { id } = req.params;
   const userId = req.user.id;
-  const transactionId = req.params.id;
 
   try {
     const result = await pool.query(
-      `DELETE FROM transactions WHERE id = $1 AND user_id = $2 RETURNING *`,
-      [transactionId, userId]
+      `DELETE FROM transactions WHERE id=$1 AND user_id=$2 RETURNING *`,
+      [id, userId]
     );
 
-    if (result.rowCount === 0) {
-      return res.status(404).json({ message: "Transaction not found" });
-    }
+    if (result.rowCount === 0)
+      return res.status(404).json({ message: 'Transaction not found' });
 
-    res.json({ message: "Deleted" });
+    res.json({ message: 'Deleted' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-//Edit a transaction
 app.put('/api/transactions/:id', protect, async (req, res) => {
-  const userId = req.user.id;
-  const transactionId = req.params.id;
-
+  const { id } = req.params;
   const { amount, category, description, created_at } = req.body;
+  const userId = req.user.id;
 
   try {
-    const result = await pool.query(`
-      UPDATE transactions
-      SET amount = $1,
-          category = $2,
-          description = $3,
-          created_at = $4
-      WHERE id = $5 AND user_id = $6
-      RETURNING *
-    `, [amount, category, description, created_at, transactionId, userId]);
+    const result = await pool.query(
+      `UPDATE transactions
+       SET amount=$1, category=$2, description=$3, created_at=$4
+       WHERE id=$5 AND user_id=$6
+       RETURNING *`,
+      [amount, category, description, created_at, id, userId]
+    );
 
-    if (result.rowCount === 0) {
-      return res.status(404).json({ message: "Transaction not found" });
-    }
+    if (result.rowCount === 0)
+      return res.status(404).json({ message: 'Transaction not found' });
 
     res.json(result.rows[0]);
-
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
-
 });
 
 // Delete current user's account

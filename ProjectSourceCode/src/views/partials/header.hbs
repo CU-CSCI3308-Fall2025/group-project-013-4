@@ -1,18 +1,19 @@
 <nav class="custom-navbar">
   <div class="nav-container">
+
+    <!-- ✅ Merged Logo: Gradient image + clickable home link -->
     <div class="nav-logo">
       <a href="/" class="logo-link" style="display: flex; align-items: center; text-decoration: none; color: inherit;">
         <div class="logo-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="1" x2="12" y2="23"></line>
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-          </svg>
+          <img src="/resources/img/logo_w_gradient.svg" alt="Logo" class="logo-img" style="height: 28px; width: auto;" />
         </div>
         <span class="logo-text" style="margin-left: 8px;">WalletWatch</span>
       </a>
     </div>
 
+    <!-- ✅ Navigation Menu -->
     <div class="nav-menu">
+
       <a href="/" class="nav-item{{#if isHome}} active{{/if}}">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -20,7 +21,7 @@
         </svg>
         <span>Home</span>
       </a>
-      
+
       <a href="/addtransaction" class="nav-item{{#if isAddTransaction}} active{{/if}}">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"></circle>
@@ -41,6 +42,18 @@
         </svg>
         <span>Leaderboard</span>
       </a>
+
+      <a href="/friends" class="nav-item{{#if isFriends}} active{{/if}}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <path d="M16 3.128a4 4 0 0 1 0 7.744"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+          <circle cx="9" cy="7" r="4"/>
+        </svg>
+        <span>Friends</span>
+      </a>
+
+      <!-- ✅ Profile Dropdown -->
       <div class="nav-item dropdown">
         <button class="dropdown-toggle" id="profileDropdown" type="button">
           <div class="nav-right">
@@ -53,6 +66,7 @@
           </div>
           <span>Profile</span>
         </button>
+
         <div class="dropdown-menu" id="profileMenu">
           <a href="/settings" class="dropdown-item">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -61,6 +75,7 @@
             </svg>
             <span>Settings</span>
           </a>
+
           <button class="dropdown-item" id="logoutBtn" type="button">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -71,9 +86,7 @@
           </button>
         </div>
       </div>
+
     </div>
   </div>
 </nav>
-
-
-

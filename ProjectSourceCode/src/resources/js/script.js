@@ -185,8 +185,10 @@ const posts = [
 
 document.addEventListener('DOMContentLoaded', () => {
   renderLeaders();
-  updateProgressBar();
   renderPosts();
+
+  const progressBar = document.getElementById('progressBar');
+  if (progressBar) updateProgressBar();
 });
 
 

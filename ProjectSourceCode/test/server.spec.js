@@ -56,7 +56,7 @@ describe('Testing /api/auth/register API', () => {
       });
   });
 
-  // Negative testcase
+  
     // ✅ Negative testcase
   it('Negative: should return 400 for missing required fields', done => {
     chai
@@ -77,3 +77,57 @@ describe('Testing /api/auth/register API', () => {
 
 });
 
+describe('Testing /api/auth/login API', () => {
+
+  // ✅ Positive testcase
+  it('Positive: should log in a user with valid credentials', done => {
+    const timestamp = Date.now();
+    const uniqueEmail = `loginuser_${timestamp}@example.com`;
+    const uniqueUsername = `login_${timestamp}`;
+    const password = 'LoginPass123!';
+
+    chai
+      .request(server)
+      .post('/api/auth/register')
+      .send({
+        username: uniqueUsername,
+        email: uniqueEmail,
+        password
+      })
+      .end((registerErr, registerRes) => {
+        expect(registerRes).to.have.status(201);
+
+        chai
+          .request(server)
+          .post('/api/auth/login')
+          .send({
+            email: uniqueEmail,
+            password
+          })
+          .end((loginErr, loginRes) => {
+            expect(loginRes).to.have.status(200);
+            expect(loginRes.body).to.have.property('id');
+            expect(loginRes.body).to.have.property('username', uniqueUsername);
+            expect(loginRes.body).to.have.property('email', uniqueEmail);
+            expect(loginRes.body).to.have.property('token');
+            done();
+          });
+      });
+  });
+
+  // ✅ Negative testcase
+  it('Negative: should reject invalid credentials', done => {
+    chai
+      .request(server)
+      .post('/api/auth/login')
+      .send({
+        email: 'nonexistent@example.com',
+        password: 'WrongPassword!'
+      })
+      .end((err, res) => {
+        expect(res).to.have.status(400);
+        expect(res.body).to.have.property('message', 'Invalid credentials');
+        done();
+      });
+  });
+});
