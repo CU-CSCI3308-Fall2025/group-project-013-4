@@ -10,16 +10,6 @@ CREATE TABLE IF NOT EXISTS users (
   profile_picture TEXT
 );
 
--- Posts Table
-CREATE TABLE IF NOT EXISTS posts (
-  id SERIAL PRIMARY KEY,
-  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  amount NUMERIC(10,2) NOT NULL,
-  category VARCHAR(50) NOT NULL CHECK (TRIM(category) !=''),
-  description TEXT NOT NULL CHECK (TRIM(description) !=''),
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
 -- Friends Table
 CREATE TABLE IF NOT EXISTS friends (
   id SERIAL PRIMARY KEY,
@@ -39,6 +29,17 @@ CREATE TABLE IF NOT EXISTS transactions (
   amount NUMERIC(10,2) NOT NULL CHECK (amount > 0),
   category VARCHAR(50) NOT NULL CHECK (TRIM(category) != ''),
   description TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+
+-- Posts Table
+CREATE TABLE IF NOT EXISTS posts (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount NUMERIC(10,2) NOT NULL,
+  category VARCHAR(50) NOT NULL CHECK (TRIM(category) !=''),
+  description TEXT NOT NULL CHECK (TRIM(description) !=''),
   created_at TIMESTAMP DEFAULT NOW()
 );
 
