@@ -222,6 +222,15 @@ app.get('/addtransaction', protect, (req, res) => {
   });
 });
 
+//budget
+app.get('/budget', protect, (req, res) => {
+  res.render('pages/budget', {
+    isBudget: true,
+    title: 'Budget',
+    year: new Date().getFullYear()
+  });
+});
+
 app.post('/api/auth/register', async (req, res) => {
   const { username, email, password } = req.body;
 
