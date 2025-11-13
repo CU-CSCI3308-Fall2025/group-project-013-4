@@ -35,13 +35,19 @@ body {
 }
 
 .logo-icon {
-    background: linear-gradient(to bottom right, #10b981, #0d9488);
+    /* background: linear-gradient(to bottom right, #10b981, #0d9488);
     padding: 0.5rem;
     border-radius: 0.5rem;
-    color: white;
+    color: white; */
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.logo-img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
 }
 
 .logo-text {
@@ -51,6 +57,12 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+.logo-link:hover {
+  color: #10b981;
+  transform: scale(1.02);
+  transition: all 0.2s ease;
 }
 
 .nav-menu {
@@ -584,7 +596,12 @@ input.valid + .input-feedback {
   color: #10b981;
 }
 
-\n.app-footer {\n  text-align: center;\n  padding: 2rem 1rem;\n  color: #94a3b8;\n  font-size: 0.875rem;\n}
+.app-footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
 
 /* Leaderboard Specific Styles */
 .leaderboard-container {
@@ -784,4 +801,13 @@ input.valid + .input-feedback {
 .trend-badge.negative {
   background: rgba(239, 68, 68, 0.1);
   color: #b91c1c;
+}
+
+.nav-profile {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid #fff;
 }

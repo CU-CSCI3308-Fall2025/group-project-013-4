@@ -6,16 +6,17 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   avatar TEXT,
   bio TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT NOW(),
+  profile_picture TEXT
 );
 
 -- Posts Table
 CREATE TABLE IF NOT EXISTS posts (
   id SERIAL PRIMARY KEY,
-  user_id INT REFERENCES users(id) ON DELETE CASCADE,
-  amount NUMERIC(10,2),
-  category VARCHAR(50),
-  description TEXT,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount NUMERIC(10,2) NOT NULL,
+  category VARCHAR(50) NOT NULL CHECK (TRIM(category) !=''),
+  description TEXT NOT NULL CHECK (TRIM(description) !=''),
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -24,10 +25,31 @@ CREATE TABLE IF NOT EXISTS friends (
   id SERIAL PRIMARY KEY,
   user_id INT REFERENCES users(id) ON DELETE CASCADE,
   friend_id INT REFERENCES users(id) ON DELETE CASCADE,
-  status VARCHAR(10) DEFAULT 'pending'  -- pending | accepted
+  status VARCHAR(10) DEFAULT 'pending',  -- pending | accepted
+  --enforce bidirectional uniqueness
+  user_low INT GENERATED ALWAYS AS (LEAST(user_id, friend_id)) STORED,
+  user_high INT GENERATED ALWAYS AS (GREATEST(user_id, friend_id)) STORED,
+  CONSTRAINT unique_friendship_pair UNIQUE (user_low, user_high)
 );
 
--- Optional test user
-INSERT INTO users (username, email, password_hash)
-VALUES ('testuser', 'test@example.com', 'placeholder')
-ON CONFLICT DO NOTHING;
+-- Transactions Table (Expenses Only)
+CREATE TABLE IF NOT EXISTS transactions (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount NUMERIC(10,2) NOT NULL CHECK (amount > 0),
+  category VARCHAR(50) NOT NULL CHECK (TRIM(category) != ''),
+  description TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- posts table
+CREATE TABLE posts (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  amount NUMERIC(10, 2),
+  category VARCHAR(100),
+  description TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Helpfull Testing DB psql -U walletwatch_user -d walletwatch

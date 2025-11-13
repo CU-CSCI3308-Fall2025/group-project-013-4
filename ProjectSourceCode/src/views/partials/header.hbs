@@ -1,16 +1,19 @@
 <nav class="custom-navbar">
   <div class="nav-container">
+
+    <!-- ✅ Merged Logo: Gradient image + clickable home link -->
     <div class="nav-logo">
-      <div class="logo-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="1" x2="12" y2="23"></line>
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-        </svg>
-      </div>
-      <span class="logo-text">WalletWatch</span>
+      <a href="/" class="logo-link" style="display: flex; align-items: center; text-decoration: none; color: inherit;">
+        <div class="logo-icon">
+          <img src="/resources/img/logo_w_gradient.svg" alt="Logo" class="logo-img" style="height: 28px; width: auto;" />
+        </div>
+        <span class="logo-text" style="margin-left: 8px;">WalletWatch</span>
+      </a>
     </div>
 
+    <!-- ✅ Navigation Menu -->
     <div class="nav-menu">
+
       <a href="/" class="nav-item{{#if isHome}} active{{/if}}">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -18,14 +21,16 @@
         </svg>
         <span>Home</span>
       </a>
-      <a href="#" class="nav-item" data-bs-toggle="modal" data-bs-target="#addPostModal">
+
+      <a href="/addtransaction" class="nav-item{{#if isAddTransaction}} active{{/if}}">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="12" y1="8" x2="12" y2="16"></line>
           <line x1="8" y1="12" x2="16" y2="12"></line>
         </svg>
-        <span>Add Post</span>
+        <span>Add Transaction</span>
       </a>
+
       <a href="/leaderboard" class="nav-item{{#if isLeaderboard}} active{{/if}}">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
@@ -37,22 +42,40 @@
         </svg>
         <span>Leaderboard</span>
       </a>
+
+      <a href="/friends" class="nav-item{{#if isFriends}} active{{/if}}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <path d="M16 3.128a4 4 0 0 1 0 7.744"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+          <circle cx="9" cy="7" r="4"/>
+        </svg>
+        <span>Friends</span>
+      </a>
+
+      <!-- ✅ Profile Dropdown -->
       <div class="nav-item dropdown">
         <button class="dropdown-toggle" id="profileDropdown" type="button">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
+          <div class="nav-right">
+            {{#if user}}
+            <img 
+              src="{{#if user.profile_picture}}{{user.profile_picture}}{{else}}/resources/img/PFP_Default.jpeg{{/if}}" 
+              class="nav-profile"
+            />
+            {{/if}}
+          </div>
           <span>Profile</span>
         </button>
+
         <div class="dropdown-menu" id="profileMenu">
-          <a href="#" class="dropdown-item">
+          <a href="/settings" class="dropdown-item">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="3"></circle>
               <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"></path>
             </svg>
             <span>Settings</span>
           </a>
+
           <button class="dropdown-item" id="logoutBtn" type="button">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -63,49 +86,7 @@
           </button>
         </div>
       </div>
+
     </div>
   </div>
 </nav>
-
-
-{{!-- Modal --}}
-<div class="modal fade" tabindex="-1" id="addPostModal">
-  <div class="modal-dialog">
-    <div class="modal-content" style="background-color: white; border: 2px solid #10b981; border-radius: 12px;">
-      <div class="modal-header" style="background-color: #10b981; color: white;">
-        <h5 class="modal-title">Create a New Post</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form id="addPostForm" novalidate>
-          <div class="mb-3">
-            <label for="postImage" class="form-label">Image</label>
-            <input type="file" class="form-control" id="postImage" accept="image/*" required />
-            <div class="invalid-feedback">Please upload an image.</div>
-          </div>
-          <div class="mb-3">
-            <label for="postCaption" class="form-label">Caption</label>
-            <textarea class="form-control" id="postCaption" rows="3" placeholder="Write a caption..." required></textarea>
-            <div class="invalid-feedback">Please enter a caption.</div>
-          </div>
-          <div class="mb-3">
-            <label for="postLocation" class="form-label">Location</label>
-            <input type="text" class="form-control" id="postLocation" placeholder="e.g., Denver, CO" required />
-            <div class="invalid-feedback">Please provide a location.</div>
-          </div>
-          <div class="mb-3">
-            <label for="postTime" class="form-label">Time</label>
-            <input type="datetime-local" class="form-control" id="postTime" required />
-            <div class="invalid-feedback">Please select a time.</div>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer" style="border-top: 1px solid #10b981;">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="submit" form="addPostForm" class="btn btn-success" style="background-color: #10b981; border: none;">
-          Post
-        </button>
-      </div>
-    </div>
-  </div>
-</div>

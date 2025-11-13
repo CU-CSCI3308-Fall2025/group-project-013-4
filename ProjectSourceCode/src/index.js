@@ -55,12 +55,15 @@ pool
     console.error('❌ Database connection error:', error.message);
   });
 
-const generateToken = id => jwt.sign({ id }, process.env.JWT_SECRET || 'supersecretjwt', { expiresIn: '2h' });
+const generateToken = id =>
+  jwt.sign({ id }, process.env.JWT_SECRET || 'supersecretjwt', {
+    expiresIn: '2h'
+  });
 
 const protect = (req, res, next) => {
   let token = null;
 
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+  if (req.headers.authorization?.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
   } else if (req.session.token) {
     token = req.session.token;
@@ -71,7 +74,10 @@ const protect = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretjwt');
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'supersecretjwt'
+    );
     req.user = decoded;
     next();
   } catch (error) {
@@ -79,7 +85,81 @@ const protect = (req, res, next) => {
   }
 };
 
-app.get('/', (req, res) => {
+// Storage for profile pictures
+const multer = require('multer');
+const fs = require('fs');
+
+const storage = multer.diskStorage({
+  destination: path.join(__dirname, 'resources/uploads'),
+  filename: (req, file, cb) => {
+    cb(null, `user_${req.user.id}_${Date.now()}.png`);
+  }
+});
+
+const upload = multer({ storage });
+
+app.post('/api/auth/upload-profile', protect, upload.single('profile'), async (req, res) => {
+  try {
+    // Get current profile picture path from DB
+    const result = await pool.query(
+      'SELECT profile_picture FROM users WHERE id = $1',
+      [req.user.id]
+    );
+
+    const oldPath = result.rows[0]?.profile_picture;
+
+    // Delete old file if it exists and is not the default
+    if (oldPath && !oldPath.includes('PFP_Default.jpeg')) {
+      // Convert URL path to filesystem path
+      const fullPath = path.join(__dirname, oldPath.replace(/^\//, '')); // remove leading slash
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath); // synchronous deletion
+        console.log('Old profile picture deleted:', fullPath);
+      }
+    }
+
+    // Save new profile picture path
+    const newFilePath = `/resources/uploads/${req.file.filename}`;
+    await pool.query(
+      'UPDATE users SET profile_picture = $1 WHERE id = $2',
+      [newFilePath, req.user.id]
+    );
+
+    res.json({ message: 'Uploaded', url: newFilePath });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Profile upload failed' });
+  }
+});
+
+
+app.use(async (req, res, next) => {
+  res.locals.user = null; // default for guests
+
+  try {
+    const token = req.session.token;
+    if (!token) return next();
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "supersecretjwt");
+
+    const result = await pool.query(
+      "SELECT * FROM users WHERE id = $1",
+      [decoded.id]
+    );
+
+    if (result.rows.length > 0) {
+      res.locals.user = result.rows[0];
+    }
+
+    next();
+  } catch (err) {
+    res.locals.user = null;
+    next();
+  }
+});
+
+app.get('/', async (req, res) => {
   res.render('pages/home', {
     title: 'Home',
     isHome: true,
@@ -87,7 +167,7 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/leaderboard', (req, res) => {
+app.get('/leaderboard', async (req, res) => {
   res.render('pages/leaderboard', {
     title: 'Leaderboard',
     isLeaderboard: true,
@@ -112,6 +192,33 @@ app.get('/register', (req, res) => {
 app.get('/logout', (req, res) => {
   req.session.destroy(() => {
     res.redirect('/login');
+  });
+});
+
+app.get('/settings', async (req, res) => {
+  res.render('pages/settings', {
+    title: 'Settings',
+    isSettings: true,
+    year: new Date().getFullYear()
+  });
+});
+
+// Friends page
+app.get('/friends', protect, (req, res) => {
+  res.render('pages/friends', {
+    user: req.user,
+    isFriends: true,
+    title: 'Friends',
+    year: new Date().getFullYear()
+  });
+});
+
+// Add Transaction page
+app.get('/addtransaction', protect, (req, res) => {
+  res.render('pages/transaction', {
+    isAddTransaction: true,
+    title: 'Add Transaction',
+    year: new Date().getFullYear()
   });
 });
 
@@ -191,7 +298,371 @@ app.get('/api/auth/me', protect, async (req, res) => {
   }
 });
 
+
+/* ----------------------------- FRIENDS FEATURE ----------------------------- */
+
+function getCurrentUserId(req) {
+  if (!req.user) throw new Error('User not authenticated');
+  return req.user.id;
+}
+
+// SEND FRIEND REQUEST
+app.post('/api/friends/request', protect, async (req, res) => {
+  const senderId = getCurrentUserId(req);
+  const { recipientId } = req.body;
+
+  if (senderId == recipientId) {
+    return res.status(400).json({ error: "You can't friend yourself!" });
+  }
+
+  const duplicateRequest = await pool.query(
+    `SELECT * FROM friends
+     WHERE (user_id=$2 AND friend_id=$1)`,
+    [senderId, recipientId]
+  );
+
+  if (duplicateRequest.rowCount > 0) {
+    return res.status(400).json({ error: 'Friend request already exists or is pending.' });
+  }
+
+  try {
+    await pool.query(
+      `INSERT INTO friends (user_id, friend_id) VALUES ($1, $2)`,
+      [senderId, recipientId]
+    );
+    res.json({ message: 'Friend request sent!' });
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(400).json({ error: "Friend request already exists." });
+    }
+    res.status(500).json({ error: "Error sending friend request." });
+  }
+});
+
+// ACCEPT FRIEND REQUEST
+app.post('/api/friends/accept', protect, async (req, res) => {
+  const recipientId = getCurrentUserId(req);
+  const { senderId } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE friends
+       SET status = 'accepted'
+       WHERE ((user_id=$1 AND friend_id=$2) OR (user_id=$2 AND friend_id=$1))
+       AND status='pending'`,
+      [recipientId, senderId]
+    );
+
+    if (result.rowCount === 0)
+      return res.status(400).json({ error: 'Request not found.' });
+
+    res.json({ message: 'Friend request accepted!' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error accepting friend request.' });
+  }
+});
+
+// REJECT FRIEND REQUEST
+app.post('/api/friends/reject', protect, async (req, res) => {
+  const recipientId = getCurrentUserId(req);
+  const { senderId } = req.body;
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM friends
+       WHERE ((user_id=$1 AND friend_id=$2) OR (user_id=$2 AND friend_id=$1))
+       AND status='pending'`,
+      [recipientId, senderId]
+    );
+
+    if (result.rowCount === 0)
+      return res.status(400).json({ error: 'Request not found.' });
+
+    res.json({ message: 'Friend request declined.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error declining friend request.' });
+  }
+});
+
+// GET FRIENDS LIST
+app.get('/api/friends', protect, async (req, res) => {
+  const currentUserId = getCurrentUserId(req);
+
+  try {
+    const result = await pool.query(
+      `SELECT u.id, u.username
+       FROM friends f
+       JOIN users u ON (u.id=f.user_id OR u.id=f.friend_id)
+       WHERE f.status='accepted'
+       AND u.id <> $1
+       AND ($1=f.user_id OR $1=f.friend_id)`,
+      [currentUserId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Error fetching friends list.' });
+  }
+});
+
+// GET PENDING REQUESTS
+app.get('/api/friends/pending', protect, async (req, res) => {
+  const currentUserId = getCurrentUserId(req);
+
+  try {
+    const result = await pool.query(
+      `SELECT f.id, u.id as sender_id, u.username
+       FROM friends f
+       JOIN users u ON u.id=f.user_id
+       WHERE f.status='pending'
+       AND f.friend_id=$1`,
+      [currentUserId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Error fetching pending friend requests.' });
+  }
+});
+
+// REMOVE FRIEND
+app.post('/api/friends/remove', protect, async (req, res) => {
+  const currentUserId = getCurrentUserId(req);
+  const { friendId } = req.body;
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM friends
+       WHERE ((user_id=$1 AND friend_id=$2) OR (user_id=$2 AND friend_id=$1))
+       AND status='accepted'`,
+      [currentUserId, friendId]
+    );
+
+    if (result.rowCount === 0)
+      return res.status(400).json({ error: 'Friend not found.' });
+
+    res.json({ message: 'Friend removed successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error removing friend.' });
+  }
+});
+
+// SEARCH FRIENDS
+app.get('/api/friends/search', protect, async (req, res) => {
+  const currentUserId = getCurrentUserId(req);
+  const query = req.query.query;
+
+  if (!query)
+    return res.status(400).json({ error: 'Query is required' });
+
+  try {
+    const result = await pool.query(
+      `SELECT id, username
+       FROM users
+       WHERE username ILIKE $1
+       AND id <> $2
+       LIMIT 10`,
+      [`%${query}%`, currentUserId]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Error searching users.' });
+  }
+});
+
+/* ----------------------------- TRANSACTIONS FEATURE ----------------------------- */
+
+app.post('/api/transactions', protect, async (req, res) => {
+  const { amount, category, description, created_at } = req.body;
+
+  if (!amount || !category)
+    return res.status(400).json({ message: 'Amount and category are required.' });
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO transactions (user_id, amount, category, description, created_at)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [req.user.id, amount, category, description || '', created_at || new Date()]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/transactions', protect, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM transactions
+       WHERE user_id=$1
+       ORDER BY created_at DESC`,
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/transactions/:id', protect, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM transactions WHERE id=$1 AND user_id=$2 RETURNING *`,
+      [id, userId]
+    );
+
+    if (result.rowCount === 0)
+      return res.status(404).json({ message: 'Transaction not found' });
+
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.put('/api/transactions/:id', protect, async (req, res) => {
+  const { id } = req.params;
+  const { amount, category, description, created_at } = req.body;
+  const userId = req.user.id;
+
+  try {
+    const result = await pool.query(
+      `UPDATE transactions
+       SET amount=$1, category=$2, description=$3, created_at=$4
+       WHERE id=$5 AND user_id=$6
+       RETURNING *`,
+      [amount, category, description, created_at, id, userId]
+    );
+
+    if (result.rowCount === 0)
+      return res.status(404).json({ message: 'Transaction not found' });
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete current user's account
+app.delete('/api/auth/delete', protect, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    // Delete the user
+    const result = await pool.query(
+      'DELETE FROM users WHERE id = $1 RETURNING *',
+      [userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Destroy session after deletion
+    req.session.destroy(err => {
+      if (err) console.error('Session destruction error:', err);
+    });
+
+    res.json({ message: 'Account successfully deleted' });
+  } catch (err) {
+    console.error('Account deletion error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+
+/* ----------------------------- POSTS FEATURE ----------------------------- */
+
+// GET ALL POSTS (feed)
+app.get('/api/posts', protect, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT p.*, u.username, u.profile_picture
+       FROM posts p
+       JOIN users u ON u.id = p.user_id
+       ORDER BY p.created_at DESC`
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Error fetching posts' });
+  }
+});
+
+// ADD POST
+app.post('/api/posts', protect, async (req, res) => {
+  const userId = req.user.id;
+  const { amount, category, description } = req.body;
+
+  if (!amount || !category) {
+    return res.status(400).json({ error: 'Amount and category required' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO posts (user_id, amount, category, description)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [userId, amount, category, description]
+    );
+
+    const newPost = result.rows[0];
+
+    // Real-time broadcast
+    if (global.broadcastNewPost) {
+      global.broadcastNewPost(newPost);
+    }
+
+    res.json(newPost);
+  } catch (err) {
+    res.status(500).json({ error: 'Error creating post' });
+  }
+});
+
+
+/* ------------------------ REAL-TIME POST STREAM (SSE) ------------------------ */
+const sseClients = [];
+
+app.get('/api/posts/stream', protect, (req, res) => {
+  res.set({
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive"
+  });
+
+  sseClients.push(res);
+
+  req.on("close", () => {
+    const index = sseClients.indexOf(res);
+    if (index !== -1) sseClients.splice(index, 1);
+  });
+});
+
+global.broadcastNewPost = function (post) {
+  sseClients.forEach(client => {
+    client.write(`data: ${JSON.stringify(post)}\n\n`);
+  });
+};
+
+
+
+app.get('/welcome', (req, res) => {
+  res.json({ status: 'success', message: 'Welcome!' });
+});
+
+console.log('Registered routes:');
+app._router.stack
+  .filter(r => r.route)
+  .map(r => console.log(`${Object.keys(r.route.methods)[0].toUpperCase()} ${r.route.path}`));
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server is listening on port ${PORT}`);
 });
+
+module.exports = server;
