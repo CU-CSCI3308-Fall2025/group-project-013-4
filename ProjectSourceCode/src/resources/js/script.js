@@ -241,7 +241,7 @@ function buildPostHTML(post) {
   const categoryLabel = post.category || '';
   const description = post.description || '';
   const imageMarkup = post.image_url
-    ? `<img src="${post.image_url}" alt="Post attachment" class="post-image" loading="lazy" />`
+    ? `<img src="${post.image_url}" alt="Post attachment" class="post-image" loading="lazy" data-full-image="${post.image_url}" />`
     : '';
   const showAmountSection = amountValue || categoryLabel;
   const serializedPost = encodeURIComponent(
@@ -301,6 +301,8 @@ const postImageInput = document.getElementById('postImage');
 const triggerImageUploadBtn = document.getElementById('triggerImageUpload');
 const postImageFilename = document.getElementById('postImageFilename');
 const postsContainer = document.getElementById('postsContainer');
+const imagePreviewModalEl = document.getElementById('imagePreviewModal');
+const imagePreviewEl = document.getElementById('imagePreview');
 
 if (triggerImageUploadBtn && postImageInput) {
   triggerImageUploadBtn.addEventListener('click', () => postImageInput.click());
@@ -325,6 +327,12 @@ if (postModalEl && window.bootstrap) {
 
 if (postsContainer) {
   postsContainer.addEventListener('click', event => {
+    const imageEl = event.target.closest('.post-image');
+    if (imageEl) {
+      showImagePreview(imageEl.dataset.fullImage || imageEl.src, imageEl.alt);
+      return;
+    }
+
     const editBtn = event.target.closest('.post-edit-btn');
     const deleteBtn = event.target.closest('.post-delete-btn');
 
@@ -342,6 +350,22 @@ if (postsContainer) {
       handleDeletePost(postId);
     }
   });
+}
+
+function showImagePreview(imageUrl, altText = 'Post image') {
+  if (!imageUrl) return;
+
+  if (imagePreviewEl) {
+    imagePreviewEl.src = imageUrl;
+    imagePreviewEl.alt = altText;
+  }
+
+  if (imagePreviewModalEl && window.bootstrap) {
+    const modal = bootstrap.Modal.getInstance(imagePreviewModalEl) || new bootstrap.Modal(imagePreviewModalEl);
+    modal.show();
+  } else {
+    window.open(imageUrl, '_blank', 'noopener');
+  }
 }
 
 function updateImageFileName() {
