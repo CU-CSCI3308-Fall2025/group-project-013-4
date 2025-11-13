@@ -222,6 +222,15 @@ app.get('/addtransaction', protect, (req, res) => {
   });
 });
 
+//budget
+app.get('/budget', protect, (req, res) => {
+  res.render('pages/budget', {
+    isBudget: true,
+    title: 'Budget',
+    year: new Date().getFullYear()
+  });
+});
+
 app.post('/api/auth/register', async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -546,6 +555,9 @@ app.put('/api/transactions/:id', protect, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// Budget
+
 
 // Delete current user's account
 app.delete('/api/auth/delete', protect, async (req, res) => {

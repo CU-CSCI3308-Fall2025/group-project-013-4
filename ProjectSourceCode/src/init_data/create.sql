@@ -50,6 +50,16 @@ CREATE TABLE posts (
   category VARCHAR(100),
   description TEXT,
   created_at TIMESTAMP DEFAULT NOW()
+  );
+  
+--Budgets Table
+CREATE TABLE IF NOT EXISTS budgets (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  category TEXT NOT NULL,
+  limit_amount NUMERIC(10,2) NOT NULL,--ex: $200 for groceries
+  period TEXT DEFAULT 'monthly', --can change
+  UNIQUE (user_id, category, period)
 );
 
 -- Helpfull Testing DB psql -U walletwatch_user -d walletwatch
