@@ -555,6 +555,9 @@ app.put('/api/transactions/:id', protect, async (req, res) => {
   }
 });
 
+// Budget
+
+
 // Delete current user's account
 app.delete('/api/auth/delete', protect, async (req, res) => {
   const userId = req.user.id;
