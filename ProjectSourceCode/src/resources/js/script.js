@@ -236,6 +236,74 @@ function renderPostsFromDB(posts) {
   });
 }
 
+/* ----------------------------- ADD POST (FORM) ----------------------------- */
+
+const addPostForm = document.getElementById('addPostForm');
+
+if (addPostForm) {
+  addPostForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    addPostForm.classList.add('was-validated');
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please log in to create a post.');
+      window.location.href = '/login';
+      return;
+    }
+
+    const amountInput = document.getElementById('postAmount');
+    const categorySelect = document.getElementById('postCategory');
+    const descriptionInput = document.getElementById('postDescription');
+
+    const amount = parseFloat(amountInput?.value || '');
+    const category = categorySelect?.value || '';
+    const description = descriptionInput?.value.trim() || '';
+
+    if (Number.isNaN(amount) || amount <= 0) {
+      amountInput?.focus();
+      return;
+    }
+
+    if (!category || category === '') {
+      categorySelect?.focus();
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ amount, category, description })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to create post.');
+      }
+
+      addPostForm.reset();
+      addPostForm.classList.remove('was-validated');
+
+      const modalEl = document.getElementById('addPostModal');
+      if (modalEl && window.bootstrap) {
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.hide();
+      }
+
+      // Refresh feed so the new post appears with username/profile data
+      loadPosts();
+    } catch (error) {
+      console.error('Post creation error:', error);
+      alert(error.message || 'Something went wrong while creating the post.');
+    }
+  });
+}
+
 /* ----------------------------- REAL-TIME FEED ------------------------------ */
 
 function startPostStream() {
