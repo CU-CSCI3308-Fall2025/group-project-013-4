@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS transactions (
 );
 
 -- posts table
-CREATE TABLE posts (
+CREATE TABLE IF NOT EXISTS posts (
   id SERIAL PRIMARY KEY,
   user_id INTEGER REFERENCES users(id),
   amount NUMERIC(10, 2),
