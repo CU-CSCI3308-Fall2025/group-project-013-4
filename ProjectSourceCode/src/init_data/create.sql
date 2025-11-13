@@ -46,20 +46,11 @@ CREATE TABLE IF NOT EXISTS budgets (
 CREATE TABLE IF NOT EXISTS posts (
   id SERIAL PRIMARY KEY,
   user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  amount NUMERIC(10,2) NOT NULL,
-  category VARCHAR(50) NOT NULL CHECK (TRIM(category) !=''),
-  description TEXT NOT NULL CHECK (TRIM(description) !=''),
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- posts table
-CREATE TABLE IF NOT EXISTS posts (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER REFERENCES users(id),
-  amount NUMERIC(10, 2),
+  amount NUMERIC(10,2),
   category VARCHAR(100),
   description TEXT,
+  image_url TEXT,
   created_at TIMESTAMP DEFAULT NOW()
-  );
+);
 
 -- Helpfull Testing DB psql -U walletwatch_user -d walletwatch
