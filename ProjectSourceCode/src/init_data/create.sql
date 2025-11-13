@@ -10,16 +10,6 @@ CREATE TABLE IF NOT EXISTS users (
   profile_picture TEXT
 );
 
--- Posts Table
-CREATE TABLE IF NOT EXISTS posts (
-  id SERIAL PRIMARY KEY,
-  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  amount NUMERIC(10,2) NOT NULL,
-  category VARCHAR(50) NOT NULL CHECK (TRIM(category) !=''),
-  description TEXT NOT NULL CHECK (TRIM(description) !=''),
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
 -- Friends Table
 CREATE TABLE IF NOT EXISTS friends (
   id SERIAL PRIMARY KEY,
@@ -41,7 +31,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   description TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
-
+ 
 --Budgets Table
 CREATE TABLE IF NOT EXISTS budgets (
   id SERIAL PRIMARY KEY,
@@ -51,5 +41,25 @@ CREATE TABLE IF NOT EXISTS budgets (
   period TEXT DEFAULT 'monthly', --can change
   UNIQUE (user_id, category, period)
 );
+
+-- Posts Table
+CREATE TABLE IF NOT EXISTS posts (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount NUMERIC(10,2) NOT NULL,
+  category VARCHAR(50) NOT NULL CHECK (TRIM(category) !=''),
+  description TEXT NOT NULL CHECK (TRIM(description) !=''),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- posts table
+CREATE TABLE IF NOT EXISTS posts (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  amount NUMERIC(10, 2),
+  category VARCHAR(100),
+  description TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+  );
 
 -- Helpfull Testing DB psql -U walletwatch_user -d walletwatch

@@ -107,7 +107,7 @@ app.post('/api/auth/upload-profile', protect, upload.single('profile'), async (r
     );
 
     const oldPath = result.rows[0]?.profile_picture;
-    
+
     // Delete old file if it exists and is not the default
     if (oldPath && !oldPath.includes('PFP_Default.jpeg')) {
       // Convert URL path to filesystem path
@@ -168,7 +168,7 @@ app.get('/', async (req, res) => {
 });
 
 app.get('/leaderboard', async (req, res) => {
-res.render('pages/leaderboard', {
+  res.render('pages/leaderboard', {
     title: 'Leaderboard',
     isLeaderboard: true,
     year: new Date().getFullYear()
@@ -196,16 +196,16 @@ app.get('/logout', (req, res) => {
 });
 
 app.get('/settings', async (req, res) => {
-res.render('pages/settings', {
+  res.render('pages/settings', {
     title: 'Settings',
     isSettings: true,
-   year: new Date().getFullYear()
+    year: new Date().getFullYear()
   });
 });
-  
+
 // Friends page
 app.get('/friends', protect, (req, res) => {
-  res.render('pages/friends', { 
+  res.render('pages/friends', {
     user: req.user,
     isFriends: true,
     title: 'Friends',
@@ -289,10 +289,11 @@ app.post('/api/auth/login', async (req, res) => {
       token
     });
   } catch (error) {
-    console.error('❌ Login error:', error.message);
+    console.error(' Login error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
+
 
 app.get('/api/auth/me', protect, async (req, res) => {
   try {
@@ -586,8 +587,84 @@ app.delete('/api/auth/delete', protect, async (req, res) => {
 });
 
 
+
+/* ----------------------------- POSTS FEATURE ----------------------------- */
+
+// GET ALL POSTS (feed)
+app.get('/api/posts', protect, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT p.*, u.username, u.profile_picture
+       FROM posts p
+       JOIN users u ON u.id = p.user_id
+       ORDER BY p.created_at DESC`
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Error fetching posts' });
+  }
+});
+
+// ADD POST
+app.post('/api/posts', protect, async (req, res) => {
+  const userId = req.user.id;
+  const { amount, category, description } = req.body;
+
+  if (!amount || !category) {
+    return res.status(400).json({ error: 'Amount and category required' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO posts (user_id, amount, category, description)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [userId, amount, category, description]
+    );
+
+    const newPost = result.rows[0];
+
+    // Real-time broadcast
+    if (global.broadcastNewPost) {
+      global.broadcastNewPost(newPost);
+    }
+
+    res.json(newPost);
+  } catch (err) {
+    res.status(500).json({ error: 'Error creating post' });
+  }
+});
+
+
+/* ------------------------ REAL-TIME POST STREAM (SSE) ------------------------ */
+const sseClients = [];
+
+app.get('/api/posts/stream', protect, (req, res) => {
+  res.set({
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive"
+  });
+
+  sseClients.push(res);
+
+  req.on("close", () => {
+    const index = sseClients.indexOf(res);
+    if (index !== -1) sseClients.splice(index, 1);
+  });
+});
+
+global.broadcastNewPost = function (post) {
+  sseClients.forEach(client => {
+    client.write(`data: ${JSON.stringify(post)}\n\n`);
+  });
+};
+
+
+
 app.get('/welcome', (req, res) => {
-  res.json({status: 'success', message: 'Welcome!'});
+  res.json({ status: 'success', message: 'Welcome!' });
 });
 
 console.log('Registered routes:');

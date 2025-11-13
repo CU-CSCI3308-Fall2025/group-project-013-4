@@ -12,20 +12,19 @@ function isTokenExpired(token) {
   }
 }
 
-// ✅ Utility: Validate Email Format
+// Validate Email Format
 function isValidEmail(email) {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
 }
 
-// ✅ Live email validation feedback (used on register page)
+/* --------------------------- EMAIL LIVE VALIDATION -------------------------- */
+
 const emailInput = document.getElementById('email');
 if (emailInput) {
   emailInput.addEventListener('input', event => {
     const error = document.getElementById('emailError');
-    if (!error) {
-      return;
-    }
+    if (!error) return;
 
     const value = event.target.value.trim();
 
@@ -47,7 +46,8 @@ if (emailInput) {
   });
 }
 
-// 🔹 Handle Registration
+/* ------------------------------ REGISTER LOGIC ------------------------------ */
+
 const registerForm = document.getElementById('registerForm');
 if (registerForm) {
   registerForm.addEventListener('submit', async event => {
@@ -85,7 +85,8 @@ if (registerForm) {
   });
 }
 
-// 🔹 Handle Login
+/* -------------------------------- LOGIN LOGIC ------------------------------- */
+
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
   loginForm.addEventListener('submit', async event => {
@@ -117,7 +118,8 @@ if (loginForm) {
   });
 }
 
-// 🔹 Optional: Auto Redirect if Already Logged In
+/* ------------------------------ AUTH REDIRECTS ------------------------------ */
+
 const currentPath = window.location.pathname;
 const storedToken = localStorage.getItem('token');
 
@@ -133,64 +135,216 @@ if (storedToken) {
   window.location.href = '/login';
 }
 
-// Sample Data
+/* ---------------------------- LEADERBOARD RENDER ---------------------------- */
+
 const dailyLeaders = [
   { rank: 1, name: 'Sarah M.', saved: 45.2, avatar: 'SM' },
   { rank: 2, name: 'Alex K.', saved: 38.75, avatar: 'AK' },
   { rank: 3, name: 'Jordan P.', saved: 32.5, avatar: 'JP' }
 ];
 
-const posts = [
-  {
-    id: 1,
-    user: 'Emily Chen',
-    avatar: 'EC',
-    time: '2 hours ago',
-    amount: 12.5,
-    category: 'Coffee',
-    description: 'Morning latte at my favorite cafe ☕',
-    reactions: 24
-  },
-  {
-    id: 2,
-    user: 'Marcus Rodriguez',
-    avatar: 'MR',
-    time: '4 hours ago',
-    amount: 45.0,
-    category: 'Groceries',
-    description: 'Weekly grocery haul 🛒',
-    reactions: 18
-  },
-  {
-    id: 3,
-    user: 'Priya Sharma',
-    avatar: 'PS',
-    time: '5 hours ago',
-    amount: 89.99,
-    category: 'Fitness',
-    description: 'New running shoes! Time to hit my goals 👟',
-    reactions: 32
-  },
-  {
-    id: 4,
-    user: 'David Kim',
-    avatar: 'DK',
-    time: '7 hours ago',
-    amount: 25.0,
-    category: 'Transport',
-    description: 'Uber to the airport ✈️',
-    reactions: 12
-  }
-];
+function renderLeaders() {
+  const leadersList = document.getElementById('leadersList');
+  if (!leadersList) return;
 
-document.addEventListener('DOMContentLoaded', () => {
-  renderLeaders();
-  renderPosts();
+  leadersList.replaceChildren();
+
+  dailyLeaders.forEach(leader => {
+    const leaderHTML = `
+      <div class="leader-item">
+        <div class="leader-info">
+          <div class="leader-avatar rank-${leader.rank}">
+            ${leader.avatar}
+          </div>
+          <div class="leader-details">
+            <h3>${leader.name}</h3>
+            <p>Saved $${leader.saved.toFixed(2)}</p>
+          </div>
+        </div>
+        <span class="leader-medal">
+          ${leader.rank === 1 ? '🥇' : leader.rank === 2 ? '🥈' : '🥉'}
+        </span>
+      </div>
+    `;
+    leadersList.insertAdjacentHTML('beforeend', leaderHTML);
+  });
+}
+
+/* ----------------------------- PROGRESS BAR UI ------------------------------ */
+
+function updateProgressBar() {
+  const dailyGoal = 100;
+  const currentSpending = 67.5;
+  const percentage = (currentSpending / dailyGoal) * 100;
 
   const progressBar = document.getElementById('progressBar');
-  if (progressBar) updateProgressBar();
-});
+  if (!progressBar) return;
 
+  progressBar.style.width = `${Math.min(percentage, 100)}%`;
+
+  if (percentage > 90) {
+    progressBar.style.background = '#ef4444';
+  } else if (percentage > 70) {
+    progressBar.style.background = '#f59e0b';
+  } else {
+    progressBar.style.background = '#10b981';
+  }
+}
+
+/* ----------------------------- POSTS (REAL DATA) ---------------------------- */
+
+// Load posts when page loads
+async function loadPosts() {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+
+  const res = await fetch('/api/posts', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  const posts = await res.json();
+  renderPostsFromDB(posts);
+}
+
+function renderPostsFromDB(posts) {
+  const container = document.getElementById('postsContainer');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  posts.forEach(post => {
+    const html = `
+      <div class="post-card">
+        <div class="post-header">
+          <div class="post-user">
+            <img src="${post.profile_picture || '/resources/img/PFP_Default.jpeg'}" class="post-avatar-img"/>
+            <div class="post-user-info">
+              <h3>${post.username}</h3>
+              <p>${new Date(post.created_at).toLocaleString()}</p>
+            </div>
+          </div>
+          <div class="post-amount">
+            <div class="post-price">$${Number(post.amount).toFixed(2)}</div>
+            <span class="post-category">${post.category}</span>
+          </div>
+        </div>
+        <p class="post-description">${post.description}</p>
+      </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', html);
+  });
+}
+
+/* ----------------------------- ADD POST (FORM) ----------------------------- */
+
+const addPostForm = document.getElementById('addPostForm');
+
+if (addPostForm) {
+  addPostForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    addPostForm.classList.add('was-validated');
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please log in to create a post.');
+      window.location.href = '/login';
+      return;
+    }
+
+    const amountInput = document.getElementById('postAmount');
+    const categorySelect = document.getElementById('postCategory');
+    const descriptionInput = document.getElementById('postDescription');
+
+    const amount = parseFloat(amountInput?.value || '');
+    const category = categorySelect?.value || '';
+    const description = descriptionInput?.value.trim() || '';
+
+    if (Number.isNaN(amount) || amount <= 0) {
+      amountInput?.focus();
+      return;
+    }
+
+    if (!category || category === '') {
+      categorySelect?.focus();
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ amount, category, description })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to create post.');
+      }
+
+      addPostForm.reset();
+      addPostForm.classList.remove('was-validated');
+
+      const modalEl = document.getElementById('addPostModal');
+      if (modalEl && window.bootstrap) {
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.hide();
+      }
+
+      // Refresh feed so the new post appears with username/profile data
+      loadPosts();
+    } catch (error) {
+      console.error('Post creation error:', error);
+      alert(error.message || 'Something went wrong while creating the post.');
+    }
+  });
+}
+
+/* ----------------------------- REAL-TIME FEED ------------------------------ */
+
+function startPostStream() {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+
+  const sse = new EventSource('/api/posts/stream');
+
+  sse.onmessage = (event) => {
+    const post = JSON.parse(event.data);
+    prependPost(post);
+  };
+}
+
+function prependPost(post) {
+  const container = document.getElementById('postsContainer');
+  if (!container) return;
+
+  const html = `
+    <div class="post-card">
+      <div class="post-header">
+        <div class="post-user">
+          <img src="${post.profile_picture || '/resources/img/PFP_Default.jpeg'}" class="post-avatar-img"/>
+          <div class="post-user-info">
+            <h3>${post.username || "You"}</h3>
+            <p>${new Date(post.created_at).toLocaleString()}</p>
+          </div>
+        </div>
+        <div class="post-amount">
+          <div class="post-price">$${Number(post.amount).toFixed(2)}</div>
+          <span class="post-category">${post.category}</span>
+        </div>
+      </div>
+      <p class="post-description">${post.description}</p>
+    </div>
+  `;
+
+  container.insertAdjacentHTML('afterbegin', html);
+}
+
+/* ----------------------- LOGOUT + PROFILE DROPDOWN UI ----------------------- */
 
 const logoutBtn = document.getElementById('logoutBtn');
 const profileDropdown = document.getElementById('profileDropdown');
@@ -219,96 +373,13 @@ if (profileDropdown && profileMenu) {
       profileMenu.classList.remove('show');
     }
   });
-
-  ['hide.bs.dropdown', 'click.bs.dropdown.data-api'].forEach(eventName => {
-    [profileDropdown, profileMenu].forEach(element => {
-      element.addEventListener(eventName, event => event.stopImmediatePropagation());
-    });
-  });
 }
 
-// Render Daily Leaders safely
-function renderLeaders() {
-  const leadersList = document.getElementById('leadersList');
-  if (!leadersList) return;
+/* ------------------------------- PAGE INIT -------------------------------- */
 
-  leadersList.replaceChildren();
-
-  dailyLeaders.forEach(leader => {
-    const leaderHTML = `
-      <div class="leader-item">
-        <div class="leader-info">
-          <div class="leader-avatar rank-${leader.rank}">
-            ${leader.avatar}
-          </div>
-          <div class="leader-details">
-            <h3>${leader.name}</h3>
-            <p>Saved $${leader.saved.toFixed(2)}</p>
-          </div>
-        </div>
-        <span class="leader-medal">
-          ${leader.rank === 1 ? '🥇' : leader.rank === 2 ? '🥈' : '🥉'}
-        </span>
-      </div>
-    `;
-    leadersList.insertAdjacentHTML('beforeend', leaderHTML);
-  });
-}
-
-// Update Progress Bar
-function updateProgressBar() {
-  const dailyGoal = 100;
-  const currentSpending = 67.5;
-  const percentage = (currentSpending / dailyGoal) * 100;
-
-  const progressBar = document.getElementById('progressBar');
-  if (!progressBar) return;
-
-  progressBar.style.width = `${Math.min(percentage, 100)}%`;
-
-  if (percentage > 90) {
-    progressBar.style.background = '#ef4444';
-  } else if (percentage > 70) {
-    progressBar.style.background = '#f59e0b';
-  } else {
-    progressBar.style.background = '#10b981';
-  }
-}
-
-// Render Posts safely
-function renderPosts() {
-  const postsContainer = document.getElementById('postsContainer');
-  if (!postsContainer) return;
-
-  postsContainer.replaceChildren();
-
-  posts.forEach(post => {
-    const postHTML = `
-      <div class="post-card">
-        <div class="post-header">
-          <div class="post-user">
-            <div class="post-avatar">${post.avatar}</div>
-            <div class="post-user-info">
-              <h3>${post.user}</h3>
-              <p>${post.time}</p>
-            </div>
-          </div>
-          <div class="post-amount">
-            <div class="post-price">$${post.amount.toFixed(2)}</div>
-            <span class="post-category">${post.category}</span>
-          </div>
-        </div>
-        <p class="post-description">${post.description}</p>
-        <div class="post-actions">
-          <button class="post-action">
-            <span>❤️</span>
-            <span>${post.reactions}</span>
-          </button>
-          <button class="post-action">Comment</button>
-          <button class="post-action">Share</button>
-        </div>
-      </div>
-    `;
-    postsContainer.insertAdjacentHTML('beforeend', postHTML);
-  });
-}
+document.addEventListener('DOMContentLoaded', () => {
+  renderLeaders();
+  updateProgressBar();
+  loadPosts();      // ← Load real posts
+  startPostStream(); // ← Enable real-time updates
+});
