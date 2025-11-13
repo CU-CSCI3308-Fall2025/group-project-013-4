@@ -1,0 +1,56 @@
+{{> header isBudget=true }}
+
+<main class="main-container">
+  <div class="budget-page">
+    <h1>Budgets & Spending</h1>
+
+    <!--set budget-->
+    <section class="budget-form-section">
+      <h2>Set Budget</h2>
+      <form id="budgetForm" class="budget-form">
+        <div class="form-group">
+          <label>Category</label>
+          <select id="budgetCategory" required>
+            <!--same categories as transactions -->
+            <option value="">Select a category</option>
+            <option>Food</option>
+            <option>Groceries</option>
+            <option>Transportation</option>
+            <option>Shopping</option>
+            <option>Entertainment</option>
+            <option>Bills</option>
+            <option>Health</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Budget Amount ($)</label>
+          <input type="number" id="budgetAmount" step="0.01" required />
+        </div>
+
+        <div class="form-group">
+          <label>Period</label>
+          <select id="budgetPeriod">
+            <option value="monthly" selected>Monthly</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-primary">Save Budget</button>
+      </form>
+    </section>
+
+    <hr style="margin: 2rem 0;">
+
+   
+
+    <!--graph,pie chart etc. -->
+    <section class="chart-section">
+      <h2>Spending Breakdown/Summary</h2>
+    </section>
+  </div>
+</main>
+
+{{> footer year=year }}
+
+
