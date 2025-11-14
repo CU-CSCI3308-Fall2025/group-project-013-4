@@ -819,3 +819,44 @@ const server = app.listen(PORT, () => {
 });
 
 module.exports = server;
+
+// Get a specific user's profile page
+app.get('/profile/:id', protect, async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    // Get user info
+    const userResult = await pool.query(
+      `SELECT id, username, email, profile_picture
+       FROM users
+       WHERE id = $1`,
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).render('pages/404', { message: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Get user's posts
+    const postsResult = await pool.query(
+      `SELECT * FROM posts
+       WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [userId]
+    );
+
+    const posts = postsResult.rows;
+
+    res.render('pages/profile', {
+      title: `${user.username}'s Profile`,
+      user,
+      posts,
+      year: new Date().getFullYear()
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).render('pages/500', { message: 'Server error' });
+  }
+});

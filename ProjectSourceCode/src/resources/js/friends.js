@@ -45,7 +45,7 @@ async function renderFriends() {
     viewProfileOption.classList.add('menu-item');
     viewProfileOption.addEventListener('click', () => {
       actionsMenu.style.display = 'none';
-      //add functionality for this later after we have a profiles page?
+      window.location.href = `/profile/${friend.id}`;
     });
     actionsMenu.appendChild(viewProfileOption);
 
