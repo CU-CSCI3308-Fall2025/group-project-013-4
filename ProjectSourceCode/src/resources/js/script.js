@@ -1,6 +1,9 @@
 // --- WalletWatch Client Logic --- //
 
 const API_BASE = '/api/auth';
+let currentUserId = null;
+let editingPostId = null;
+let editingPostImageUrl = null;
 
 function isTokenExpired(token) {
   try {
@@ -12,20 +15,19 @@ function isTokenExpired(token) {
   }
 }
 
-// ✅ Utility: Validate Email Format
+// Validate Email Format
 function isValidEmail(email) {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
 }
 
-// ✅ Live email validation feedback (used on register page)
+/* --------------------------- EMAIL LIVE VALIDATION -------------------------- */
+
 const emailInput = document.getElementById('email');
 if (emailInput) {
   emailInput.addEventListener('input', event => {
     const error = document.getElementById('emailError');
-    if (!error) {
-      return;
-    }
+    if (!error) return;
 
     const value = event.target.value.trim();
 
@@ -47,7 +49,8 @@ if (emailInput) {
   });
 }
 
-// 🔹 Handle Registration
+/* ------------------------------ REGISTER LOGIC ------------------------------ */
+
 const registerForm = document.getElementById('registerForm');
 if (registerForm) {
   registerForm.addEventListener('submit', async event => {
@@ -85,7 +88,8 @@ if (registerForm) {
   });
 }
 
-// 🔹 Handle Login
+/* -------------------------------- LOGIN LOGIC ------------------------------- */
+
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
   loginForm.addEventListener('submit', async event => {
@@ -117,7 +121,8 @@ if (loginForm) {
   });
 }
 
-// 🔹 Optional: Auto Redirect if Already Logged In
+/* ------------------------------ AUTH REDIRECTS ------------------------------ */
+
 const currentPath = window.location.pathname;
 const storedToken = localStorage.getItem('token');
 
@@ -133,64 +138,430 @@ if (storedToken) {
   window.location.href = '/login';
 }
 
-// Sample Data
+/* ---------------------------- LEADERBOARD RENDER ---------------------------- */
+
 const dailyLeaders = [
   { rank: 1, name: 'Sarah M.', saved: 45.2, avatar: 'SM' },
   { rank: 2, name: 'Alex K.', saved: 38.75, avatar: 'AK' },
   { rank: 3, name: 'Jordan P.', saved: 32.5, avatar: 'JP' }
 ];
 
-const posts = [
-  {
-    id: 1,
-    user: 'Emily Chen',
-    avatar: 'EC',
-    time: '2 hours ago',
-    amount: 12.5,
-    category: 'Coffee',
-    description: 'Morning latte at my favorite cafe ☕',
-    reactions: 24
-  },
-  {
-    id: 2,
-    user: 'Marcus Rodriguez',
-    avatar: 'MR',
-    time: '4 hours ago',
-    amount: 45.0,
-    category: 'Groceries',
-    description: 'Weekly grocery haul 🛒',
-    reactions: 18
-  },
-  {
-    id: 3,
-    user: 'Priya Sharma',
-    avatar: 'PS',
-    time: '5 hours ago',
-    amount: 89.99,
-    category: 'Fitness',
-    description: 'New running shoes! Time to hit my goals 👟',
-    reactions: 32
-  },
-  {
-    id: 4,
-    user: 'David Kim',
-    avatar: 'DK',
-    time: '7 hours ago',
-    amount: 25.0,
-    category: 'Transport',
-    description: 'Uber to the airport ✈️',
-    reactions: 12
-  }
-];
+function renderLeaders() {
+  const leadersList = document.getElementById('leadersList');
+  if (!leadersList) return;
 
-document.addEventListener('DOMContentLoaded', () => {
-  renderLeaders();
-  renderPosts();
+  leadersList.replaceChildren();
+
+  dailyLeaders.forEach(leader => {
+    const leaderHTML = `
+      <div class="leader-item">
+        <div class="leader-info">
+          <div class="leader-avatar rank-${leader.rank}">
+            ${leader.avatar}
+          </div>
+          <div class="leader-details">
+            <h3>${leader.name}</h3>
+            <p>Saved $${leader.saved.toFixed(2)}</p>
+          </div>
+        </div>
+        <span class="leader-medal">
+          ${leader.rank === 1 ? '🥇' : leader.rank === 2 ? '🥈' : '🥉'}
+        </span>
+      </div>
+    `;
+    leadersList.insertAdjacentHTML('beforeend', leaderHTML);
+  });
+}
+
+/* ----------------------------- PROGRESS BAR UI ------------------------------ */
+
+function updateProgressBar() {
+  const dailyGoal = 100;
+  const currentSpending = 67.5;
+  const percentage = (currentSpending / dailyGoal) * 100;
 
   const progressBar = document.getElementById('progressBar');
-  if (progressBar) updateProgressBar();
-});
+  if (!progressBar) return;
 
+  progressBar.style.width = `${Math.min(percentage, 100)}%`;
+
+  if (percentage > 90) {
+    progressBar.style.background = '#ef4444';
+  } else if (percentage > 70) {
+    progressBar.style.background = '#f59e0b';
+  } else {
+    progressBar.style.background = '#10b981';
+  }
+}
+
+/* ----------------------------- POSTS (REAL DATA) ---------------------------- */
+
+// Load posts when page loads
+async function loadPosts() {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+
+  try {
+    const res = await fetch('/api/posts', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      throw new Error('Unable to fetch posts');
+    }
+
+    const posts = await res.json();
+    renderPostsFromDB(posts);
+  } catch (error) {
+    console.error('Unable to load posts:', error);
+  }
+}
+
+function renderPostsFromDB(posts) {
+  const container = document.getElementById('postsContainer');
+  if (!container) return;
+
+  if (!Array.isArray(posts) || posts.length === 0) {
+    container.innerHTML = '<p class="text-muted">No posts yet. Be the first to share!</p>';
+    return;
+  }
+
+  const markup = posts.map(post => buildPostHTML(post)).join('');
+  container.innerHTML = markup;
+}
+
+function buildPostHTML(post) {
+  if (!post) return '';
+
+  const profileImage = post.profile_picture || '/resources/img/PFP_Default.jpeg';
+  const username = post.username || (post.user_id === currentUserId ? 'You' : 'WalletWatch member');
+  const createdAt = post.created_at ? new Date(post.created_at).toLocaleString() : '';
+  const hasAmount = typeof post.amount !== 'undefined' && post.amount !== null && post.amount !== '';
+  const amountValue = hasAmount ? `$${Number(post.amount).toFixed(2)}` : '';
+  const categoryLabel = post.category || '';
+  const description = post.description || '';
+  const imageMarkup = post.image_url
+    ? `<img src="${post.image_url}" alt="Post attachment" class="post-image" loading="lazy" data-full-image="${post.image_url}" />`
+    : '';
+  const showAmountSection = amountValue || categoryLabel;
+  const serializedPost = encodeURIComponent(
+    JSON.stringify({
+      id: post.id,
+      amount: post.amount,
+      category: post.category,
+      description: post.description,
+      image_url: post.image_url
+    })
+  );
+  const canEdit = Number(post.user_id) === Number(currentUserId);
+
+  return `
+    <div class="post-card" data-post-id="${post.id}">
+      <div class="post-header">
+        <div class="post-user">
+          <img src="${profileImage}" class="post-avatar-img" alt="${username}'s avatar"/>
+          <div class="post-user-info">
+            <h3>${username}</h3>
+            <p>${createdAt}</p>
+          </div>
+        </div>
+        ${
+          showAmountSection
+            ? `<div class="post-amount">
+                ${amountValue ? `<div class="post-price">${amountValue}</div>` : ''}
+                ${categoryLabel ? `<span class="post-category">${categoryLabel}</span>` : ''}
+              </div>`
+            : ''
+        }
+      </div>
+      ${description ? `<p class="post-description">${description}</p>` : ''}
+      ${imageMarkup}
+      ${
+        canEdit
+          ? `<div class="post-actions">
+              <button type="button" class="post-action post-edit-btn" data-post="${serializedPost}">
+                ✏️ Edit
+              </button>
+              <button type="button" class="post-action delete post-delete-btn" data-post-id="${post.id}">
+                🗑 Delete
+              </button>
+            </div>`
+          : ''
+      }
+    </div>
+  `;
+}
+
+/* ----------------------------- ADD POST (FORM) ----------------------------- */
+
+const addPostForm = document.getElementById('addPostForm');
+const postModalEl = document.getElementById('addPostModal');
+const postModalTitle = document.getElementById('postModalTitle');
+const postImageInput = document.getElementById('postImage');
+const triggerImageUploadBtn = document.getElementById('triggerImageUpload');
+const postImageFilename = document.getElementById('postImageFilename');
+const postsContainer = document.getElementById('postsContainer');
+const imagePreviewModalEl = document.getElementById('imagePreviewModal');
+const imagePreviewEl = document.getElementById('imagePreview');
+
+if (triggerImageUploadBtn && postImageInput) {
+  triggerImageUploadBtn.addEventListener('click', () => postImageInput.click());
+}
+
+if (postImageInput) {
+  postImageInput.addEventListener('change', () => updateImageFileName());
+}
+
+if (addPostForm) {
+  addPostForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    await submitPostForm();
+  });
+}
+
+if (postModalEl && window.bootstrap) {
+  postModalEl.addEventListener('hidden.bs.modal', () => {
+    resetPostForm();
+  });
+}
+
+if (postsContainer) {
+  postsContainer.addEventListener('click', event => {
+    const imageEl = event.target.closest('.post-image');
+    if (imageEl) {
+      showImagePreview(imageEl.dataset.fullImage || imageEl.src, imageEl.alt);
+      return;
+    }
+
+    const editBtn = event.target.closest('.post-edit-btn');
+    const deleteBtn = event.target.closest('.post-delete-btn');
+
+    if (editBtn) {
+      const payload = editBtn.dataset.post;
+      const parsed = parsePostPayload(payload);
+      if (parsed) {
+        populatePostForm(parsed);
+      }
+      return;
+    }
+
+    if (deleteBtn) {
+      const postId = deleteBtn.dataset.postId;
+      handleDeletePost(postId);
+    }
+  });
+}
+
+function showImagePreview(imageUrl, altText = 'Post image') {
+  if (!imageUrl) return;
+
+  if (imagePreviewEl) {
+    imagePreviewEl.src = imageUrl;
+    imagePreviewEl.alt = altText;
+  }
+
+  if (imagePreviewModalEl && window.bootstrap) {
+    const modal = bootstrap.Modal.getInstance(imagePreviewModalEl) || new bootstrap.Modal(imagePreviewModalEl);
+    modal.show();
+  } else {
+    window.open(imageUrl, '_blank', 'noopener');
+  }
+}
+
+function updateImageFileName() {
+  if (!postImageFilename) return;
+
+  if (postImageInput?.files?.length) {
+    postImageFilename.textContent = postImageInput.files[0].name;
+  } else if (editingPostImageUrl) {
+    postImageFilename.textContent = 'Current image will be kept';
+  } else {
+    postImageFilename.textContent = 'No file selected';
+  }
+}
+
+async function submitPostForm() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('Please log in to manage posts.');
+    window.location.href = '/login';
+    return;
+  }
+
+  const amountInput = document.getElementById('postAmount');
+  const categorySelect = document.getElementById('postCategory');
+  const descriptionInput = document.getElementById('postDescription');
+
+  const formData = new FormData();
+  formData.append('amount', amountInput?.value?.trim() || '');
+  formData.append('category', categorySelect?.value || '');
+  formData.append('description', descriptionInput?.value?.trim() || '');
+
+  if (postImageInput?.files?.length) {
+    formData.append('image', postImageInput.files[0]);
+  }
+
+  const endpoint = editingPostId ? `/api/posts/${editingPostId}` : '/api/posts';
+  const method = editingPostId ? 'PUT' : 'POST';
+
+  try {
+    const response = await fetch(endpoint, {
+      method,
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Unable to save post.');
+    }
+
+    await loadPosts();
+
+    if (postModalEl && window.bootstrap) {
+      const modal = bootstrap.Modal.getInstance(postModalEl) || new bootstrap.Modal(postModalEl);
+      modal.hide();
+    }
+
+    resetPostForm();
+  } catch (error) {
+    console.error('Post save error:', error);
+    alert(error.message || 'Something went wrong while saving the post.');
+  }
+}
+
+function resetPostForm() {
+  if (addPostForm) {
+    addPostForm.reset();
+  }
+  editingPostId = null;
+  editingPostImageUrl = null;
+  if (postModalTitle) {
+    postModalTitle.textContent = 'Create a New Post';
+  }
+  if (postImageInput) {
+    postImageInput.value = '';
+  }
+  updateImageFileName();
+}
+
+function populatePostForm(post) {
+  if (!post || !addPostForm) return;
+
+  const amountInput = document.getElementById('postAmount');
+  const categorySelect = document.getElementById('postCategory');
+  const descriptionInput = document.getElementById('postDescription');
+
+  if (amountInput) {
+    amountInput.value = typeof post.amount !== 'undefined' && post.amount !== null ? post.amount : '';
+  }
+  if (categorySelect) {
+    categorySelect.value = post.category || '';
+  }
+  if (descriptionInput) {
+    descriptionInput.value = post.description || '';
+  }
+
+  editingPostId = post.id;
+  editingPostImageUrl = post.image_url || null;
+  if (postModalTitle) {
+    postModalTitle.textContent = 'Edit Post';
+  }
+  updateImageFileName();
+
+  if (postModalEl && window.bootstrap) {
+    const modal = bootstrap.Modal.getInstance(postModalEl) || new bootstrap.Modal(postModalEl);
+    modal.show();
+  }
+}
+
+function parsePostPayload(encodedPayload) {
+  if (!encodedPayload) return null;
+  try {
+    return JSON.parse(decodeURIComponent(encodedPayload));
+  } catch (error) {
+    console.error('Unable to parse post payload:', error);
+    return null;
+  }
+}
+
+async function handleDeletePost(postId) {
+  if (!postId) return;
+
+  const confirmed = window.confirm('Are you sure you want to delete this post?');
+  if (!confirmed) return;
+
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('Please log in to manage posts.');
+    window.location.href = '/login';
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/posts/${postId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Unable to delete post.');
+    }
+
+    await loadPosts();
+  } catch (error) {
+    console.error('Post deletion error:', error);
+    alert(error.message || 'Unable to delete the post right now.');
+  }
+}
+
+async function fetchCurrentUser() {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+
+  try {
+    const response = await fetch('/api/auth/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    currentUserId = data.id;
+    return data;
+  } catch (error) {
+    console.error('Unable to fetch current user:', error);
+    return null;
+  }
+}
+
+/* ----------------------------- REAL-TIME FEED ------------------------------ */
+
+function startPostStream() {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+
+  const sse = new EventSource('/api/posts/stream');
+
+  sse.onmessage = (event) => {
+    const post = JSON.parse(event.data);
+    prependPost(post);
+  };
+}
+
+function prependPost(post) {
+  const container = document.getElementById('postsContainer');
+  if (!container) return;
+
+  container.insertAdjacentHTML('afterbegin', buildPostHTML(post));
+}
+
+/* ----------------------- LOGOUT + PROFILE DROPDOWN UI ----------------------- */
 
 const logoutBtn = document.getElementById('logoutBtn');
 const profileDropdown = document.getElementById('profileDropdown');
@@ -219,96 +590,19 @@ if (profileDropdown && profileMenu) {
       profileMenu.classList.remove('show');
     }
   });
-
-  ['hide.bs.dropdown', 'click.bs.dropdown.data-api'].forEach(eventName => {
-    [profileDropdown, profileMenu].forEach(element => {
-      element.addEventListener(eventName, event => event.stopImmediatePropagation());
-    });
-  });
 }
 
-// Render Daily Leaders safely
-function renderLeaders() {
-  const leadersList = document.getElementById('leadersList');
-  if (!leadersList) return;
+/* ------------------------------- PAGE INIT -------------------------------- */
 
-  leadersList.replaceChildren();
+document.addEventListener('DOMContentLoaded', () => {
+  renderLeaders();
+  updateProgressBar();
+  updateImageFileName();
+  initializeFeed();
+});
 
-  dailyLeaders.forEach(leader => {
-    const leaderHTML = `
-      <div class="leader-item">
-        <div class="leader-info">
-          <div class="leader-avatar rank-${leader.rank}">
-            ${leader.avatar}
-          </div>
-          <div class="leader-details">
-            <h3>${leader.name}</h3>
-            <p>Saved $${leader.saved.toFixed(2)}</p>
-          </div>
-        </div>
-        <span class="leader-medal">
-          ${leader.rank === 1 ? '🥇' : leader.rank === 2 ? '🥈' : '🥉'}
-        </span>
-      </div>
-    `;
-    leadersList.insertAdjacentHTML('beforeend', leaderHTML);
-  });
-}
-
-// Update Progress Bar
-function updateProgressBar() {
-  const dailyGoal = 100;
-  const currentSpending = 67.5;
-  const percentage = (currentSpending / dailyGoal) * 100;
-
-  const progressBar = document.getElementById('progressBar');
-  if (!progressBar) return;
-
-  progressBar.style.width = `${Math.min(percentage, 100)}%`;
-
-  if (percentage > 90) {
-    progressBar.style.background = '#ef4444';
-  } else if (percentage > 70) {
-    progressBar.style.background = '#f59e0b';
-  } else {
-    progressBar.style.background = '#10b981';
-  }
-}
-
-// Render Posts safely
-function renderPosts() {
-  const postsContainer = document.getElementById('postsContainer');
-  if (!postsContainer) return;
-
-  postsContainer.replaceChildren();
-
-  posts.forEach(post => {
-    const postHTML = `
-      <div class="post-card">
-        <div class="post-header">
-          <div class="post-user">
-            <div class="post-avatar">${post.avatar}</div>
-            <div class="post-user-info">
-              <h3>${post.user}</h3>
-              <p>${post.time}</p>
-            </div>
-          </div>
-          <div class="post-amount">
-            <div class="post-price">$${post.amount.toFixed(2)}</div>
-            <span class="post-category">${post.category}</span>
-          </div>
-        </div>
-        <p class="post-description">${post.description}</p>
-        <div class="post-actions">
-          <button class="post-action">
-            <span>❤️</span>
-            <span>${post.reactions}</span>
-          </button>
-          <button class="post-action">Comment</button>
-          <button class="post-action">Share</button>
-        </div>
-      </div>
-    `;
-    postsContainer.insertAdjacentHTML('beforeend', postHTML);
-  });
+async function initializeFeed() {
+  await fetchCurrentUser();
+  await loadPosts();
+  startPostStream();
 }
