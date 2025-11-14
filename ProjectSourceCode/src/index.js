@@ -55,6 +55,27 @@ pool
     console.error('❌ Database connection error:', error.message);
   });
 
+async function ensurePostsTableSchema() {
+  const queries = [
+    "ALTER TABLE posts ADD COLUMN IF NOT EXISTS image_url TEXT",
+    "ALTER TABLE posts ALTER COLUMN amount DROP NOT NULL",
+    "ALTER TABLE posts ALTER COLUMN category DROP NOT NULL",
+    "ALTER TABLE posts ALTER COLUMN description DROP NOT NULL",
+    "ALTER TABLE posts DROP CONSTRAINT IF EXISTS posts_category_check",
+    "ALTER TABLE posts DROP CONSTRAINT IF EXISTS posts_description_check"
+  ];
+
+  for (const statement of queries) {
+    try {
+      await pool.query(statement);
+    } catch (error) {
+      console.warn('⚠️ Unable to adjust posts table schema:', error.message);
+    }
+  }
+}
+
+ensurePostsTableSchema();
+
 const generateToken = id =>
   jwt.sign({ id }, process.env.JWT_SECRET || 'supersecretjwt', {
     expiresIn: '2h'
@@ -89,16 +110,45 @@ const protect = (req, res, next) => {
 const multer = require('multer');
 const fs = require('fs');
 
-const storage = multer.diskStorage({
-  destination: path.join(__dirname, 'resources/uploads'),
+const ensureDirExists = dirPath => {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+};
+
+const uploadsDir = path.join(__dirname, 'resources/uploads');
+const postUploadsDir = path.join(uploadsDir, 'posts');
+
+ensureDirExists(uploadsDir);
+ensureDirExists(postUploadsDir);
+
+const profileStorage = multer.diskStorage({
+  destination: uploadsDir,
   filename: (req, file, cb) => {
     cb(null, `user_${req.user.id}_${Date.now()}.png`);
   }
 });
 
-const upload = multer({ storage });
+const profileUpload = multer({ storage: profileStorage });
 
-app.post('/api/auth/upload-profile', protect, upload.single('profile'), async (req, res) => {
+const postStorage = multer.diskStorage({
+  destination: postUploadsDir,
+  filename: (req, file, cb) => {
+    cb(null, `post_${req.user.id}_${Date.now()}${path.extname(file.originalname) || '.png'}`);
+  }
+});
+
+const postUpload = multer({ storage: postStorage });
+
+const removeFileIfExists = filePath => {
+  if (!filePath) return;
+  const normalizedPath = path.join(__dirname, filePath.replace(/^\//, ''));
+  if (fs.existsSync(normalizedPath)) {
+    fs.unlinkSync(normalizedPath);
+  }
+};
+
+app.post('/api/auth/upload-profile', protect, profileUpload.single('profile'), async (req, res) => {
   try {
     // Get current profile picture path from DB
     const result = await pool.query(
@@ -590,6 +640,18 @@ app.delete('/api/auth/delete', protect, async (req, res) => {
 
 /* ----------------------------- POSTS FEATURE ----------------------------- */
 
+const sanitizeAmount = value => {
+  if (typeof value === 'undefined' || value === null || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const sanitizeText = value => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : null;
+};
+
 // GET ALL POSTS (feed)
 app.get('/api/posts', protect, async (req, res) => {
   try {
@@ -607,32 +669,111 @@ app.get('/api/posts', protect, async (req, res) => {
 });
 
 // ADD POST
-app.post('/api/posts', protect, async (req, res) => {
+app.post('/api/posts', protect, postUpload.single('image'), async (req, res) => {
   const userId = req.user.id;
-  const { amount, category, description } = req.body;
-
-  if (!amount || !category) {
-    return res.status(400).json({ error: 'Amount and category required' });
-  }
+  const amount = sanitizeAmount(req.body.amount);
+  const category = sanitizeText(req.body.category);
+  const description = sanitizeText(req.body.description);
+  const imageUrl = req.file ? `/resources/uploads/posts/${req.file.filename}` : null;
 
   try {
     const result = await pool.query(
-      `INSERT INTO posts (user_id, amount, category, description)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO posts (user_id, amount, category, description, image_url)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [userId, amount, category, description]
+      [userId, amount, category, description, imageUrl]
     );
 
     const newPost = result.rows[0];
 
-    // Real-time broadcast
     if (global.broadcastNewPost) {
       global.broadcastNewPost(newPost);
     }
 
     res.json(newPost);
   } catch (err) {
+    console.error('Error creating post:', err.message);
     res.status(500).json({ error: 'Error creating post' });
+  }
+});
+
+// UPDATE POST
+app.put('/api/posts/:id', protect, postUpload.single('image'), async (req, res) => {
+  const userId = req.user.id;
+  const postId = Number(req.params.id);
+
+  try {
+    const existingResult = await pool.query('SELECT * FROM posts WHERE id = $1', [postId]);
+
+    if (existingResult.rowCount === 0) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    const existingPost = existingResult.rows[0];
+
+    if (existingPost.user_id !== userId) {
+      return res.status(403).json({ error: 'You can only edit your own posts.' });
+    }
+
+    const updatedAmount = Object.prototype.hasOwnProperty.call(req.body, 'amount')
+      ? sanitizeAmount(req.body.amount)
+      : existingPost.amount;
+    const updatedCategory = Object.prototype.hasOwnProperty.call(req.body, 'category')
+      ? sanitizeText(req.body.category)
+      : existingPost.category;
+    const updatedDescription = Object.prototype.hasOwnProperty.call(req.body, 'description')
+      ? sanitizeText(req.body.description)
+      : existingPost.description;
+
+    let updatedImageUrl = existingPost.image_url;
+    if (req.file) {
+      removeFileIfExists(existingPost.image_url);
+      updatedImageUrl = `/resources/uploads/posts/${req.file.filename}`;
+    }
+
+    const result = await pool.query(
+      `UPDATE posts
+       SET amount = $1,
+           category = $2,
+           description = $3,
+           image_url = $4
+       WHERE id = $5
+       RETURNING *`,
+      [updatedAmount, updatedCategory, updatedDescription, updatedImageUrl, postId]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error updating post:', err.message);
+    res.status(500).json({ error: 'Error updating post' });
+  }
+});
+
+// DELETE POST
+app.delete('/api/posts/:id', protect, async (req, res) => {
+  const userId = req.user.id;
+  const postId = Number(req.params.id);
+
+  try {
+    const existingResult = await pool.query('SELECT * FROM posts WHERE id = $1', [postId]);
+
+    if (existingResult.rowCount === 0) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    const existingPost = existingResult.rows[0];
+
+    if (existingPost.user_id !== userId) {
+      return res.status(403).json({ error: 'You can only delete your own posts.' });
+    }
+
+    await pool.query('DELETE FROM posts WHERE id = $1', [postId]);
+    removeFileIfExists(existingPost.image_url);
+
+    res.json({ message: 'Post deleted' });
+  } catch (err) {
+    console.error('Error deleting post:', err.message);
+    res.status(500).json({ error: 'Error deleting post' });
   }
 });
 

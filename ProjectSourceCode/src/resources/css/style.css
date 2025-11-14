@@ -386,6 +386,15 @@ body {
     font-weight: 600;
 }
 
+.post-avatar-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid #e2e8f0;
+}
+
 .post-user-info h3 {
     font-size: 1rem;
     font-weight: 600;
@@ -423,10 +432,47 @@ body {
     line-height: 1.5;
 }
 
+.post-image {
+    width: 100%;
+    border-radius: 0.75rem;
+    margin-bottom: 1rem;
+    object-fit: cover;
+    max-height: 280px;
+    border: 1px solid #e2e8f0;
+    cursor: zoom-in;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.post-image:hover {
+    transform: scale(1.01);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.15);
+}
+
+.image-preview-modal .modal-content {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.image-preview-modal .modal-body {
+    padding: 0;
+    background-color: rgba(15, 23, 42, 0.9);
+    border-radius: 1rem;
+}
+
+.image-preview-modal img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 1rem;
+}
+
 .post-actions {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
 }
 
 .post-action {
@@ -444,6 +490,24 @@ body {
 
 .post-action:hover {
     color: #059669;
+}
+
+.post-action.delete {
+    color: #dc2626;
+}
+
+.post-action.delete:hover {
+    color: #b91c1c;
+}
+
+.image-upload-control {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.image-upload-control .btn {
+    border-style: dashed;
 }
 
 /* Responsive */
