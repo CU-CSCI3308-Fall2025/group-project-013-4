@@ -5,6 +5,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.updateProgressBar();
   window.updateImageFileName();
 
+  const imageInput = document.getElementById("postImage");
+  const triggerImageBtn = document.getElementById("triggerImageUpload");
+
+  if (triggerImageBtn && imageInput) {
+    triggerImageBtn.addEventListener("click", () => imageInput.click());
+  }
+
+  if (imageInput) {
+    imageInput.addEventListener("change", () => window.updateImageFileName());
+  }
+
+  
   await window.fetchCurrentUser();
   await window.loadPosts();
   window.startPostStream();
