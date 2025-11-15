@@ -652,21 +652,44 @@ const sanitizeText = value => {
   return trimmed.length ? trimmed : null;
 };
 
-// GET ALL POSTS (feed)
 app.get('/api/posts', protect, async (req, res) => {
+  const currentUserId = req.user.id;
+
   try {
     const result = await pool.query(
-      `SELECT p.*, u.username, u.profile_picture
-       FROM posts p
-       JOIN users u ON u.id = p.user_id
-       ORDER BY p.created_at DESC`
+      `
+      WITH friend_ids AS (
+        SELECT friend_id AS id
+        FROM friends
+        WHERE user_id = $1 AND status='accepted'
+        
+        UNION
+        
+        SELECT user_id AS id
+        FROM friends
+        WHERE friend_id = $1 AND status='accepted'
+      )
+      
+      SELECT p.*, u.username, u.profile_picture
+      FROM posts p
+      JOIN users u ON u.id = p.user_id
+      WHERE 
+        p.user_id = $1
+        OR p.user_id IN (SELECT id FROM friend_ids)
+      ORDER BY p.created_at DESC
+      `,
+      [currentUserId]
     );
 
     res.json(result.rows);
+
   } catch (err) {
+    console.error('Error fetching posts:', err);
     res.status(500).json({ error: 'Error fetching posts' });
   }
 });
+
+
 
 // ADD POST
 app.post('/api/posts', protect, postUpload.single('image'), async (req, res) => {
@@ -788,19 +811,52 @@ app.get('/api/posts/stream', protect, (req, res) => {
     "Connection": "keep-alive"
   });
 
-  sseClients.push(res);
+  sseClients.push({ userId: req.user.id, res });
 
   req.on("close", () => {
-    const index = sseClients.indexOf(res);
+    const index = sseClients.findIndex(c => c.res === res);
     if (index !== -1) sseClients.splice(index, 1);
   });
+
 });
 
-global.broadcastNewPost = function (post) {
-  sseClients.forEach(client => {
-    client.write(`data: ${JSON.stringify(post)}\n\n`);
-  });
+global.broadcastNewPost = async function (post) {
+  try {
+    const posterId = post.user_id;
+
+    // Query friends of poster
+    const friendsResult = await pool.query(
+      `
+      WITH friend_ids AS (
+        SELECT friend_id AS id
+        FROM friends
+        WHERE user_id = $1 AND status='accepted'
+        
+        UNION
+        
+        SELECT user_id AS id
+        FROM friends
+        WHERE friend_id = $1 AND status='accepted'
+      )
+      SELECT id FROM friend_ids;
+      `,
+      [posterId]
+    );
+
+    const friendIds = friendsResult.rows.map(r => r.id);
+
+    // Broadcast only to poster and their accepted friends
+    sseClients.forEach(client => {
+      if (client.userId === posterId || friendIds.includes(client.userId)) {
+        client.res.write(`data: ${JSON.stringify(post)}\n\n`);
+      }
+    });
+
+  } catch (err) {
+    console.error("SSE broadcast error:", err);
+  }
 };
+
 
 
 
