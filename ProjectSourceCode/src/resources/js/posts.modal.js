@@ -17,6 +17,19 @@ window.updateImageFileName = function () {
   }
 };
 
+document.addEventListener("DOMContentLoaded", () => {
+  const fileInput = document.getElementById("postImage");
+  const uploadTrigger = document.getElementById("triggerImageUpload");
+
+  if (uploadTrigger && fileInput) {
+    uploadTrigger.addEventListener("click", () => fileInput.click());
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener("change", () => window.updateImageFileName());
+  }
+});
+
 // Parse encoded post JSON from edit button
 window.parsePostPayload = function (encoded) {
   try {
