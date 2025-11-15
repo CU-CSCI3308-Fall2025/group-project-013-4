@@ -106,16 +106,17 @@ router.put("/:id", protect, postUpload.single("image"), async (req, res) => {
       return res.status(403).json({ error: "You can only edit your own posts." });
     }
 
-    const updatedAmount = req.body.hasOwnProperty("amount")
-      ? sanitizeAmount(req.body.amount)
+    const body = req.body || {};
+    const updatedAmount = Object.prototype.hasOwnProperty.call(body, "amount")
+      ? sanitizeAmount(body.amount)
       : post.amount;
 
-    const updatedCategory = req.body.hasOwnProperty("category")
-      ? sanitizeText(req.body.category)
+    const updatedCategory = Object.prototype.hasOwnProperty.call(body, "category")
+      ? sanitizeText(body.category)
       : post.category;
 
-    const updatedDescription = req.body.hasOwnProperty("description")
-      ? sanitizeText(req.body.description)
+    const updatedDescription = Object.prototype.hasOwnProperty.call(body, "description")
+      ? sanitizeText(body.description)
       : post.description;
 
     let updatedImageUrl = post.image_url;
