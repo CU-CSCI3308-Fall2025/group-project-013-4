@@ -23,16 +23,29 @@ async function renderFriends() {
     const div = document.createElement('div');
     div.classList.add('friend-item');
 
+    //PFP and username grouping
+    const left = document.createElement('div');
+    left.classList.add('left-side');
+
+    //PFP
+    const profilePic = document.createElement('img');
+    console.log(friend.username, friend.profile_picture);
+    profilePic.src = friend.profile_picture || "/resources/img/PFP_Default.jpeg";
+    profilePic.classList.add('profile-pic');
+    left.appendChild(profilePic);
+
     // Friend name
     const nameSpan = document.createElement('span');
     nameSpan.textContent = friend.username;
-    div.appendChild(nameSpan);
+    left.appendChild(nameSpan);
 
     // Three-dot button (hidden until hover)
     const dotsBtn = document.createElement('button');
     dotsBtn.textContent = '⋮';
     dotsBtn.classList.add('dots-btn');
+    div.appendChild(left);
     div.appendChild(dotsBtn);
+
 
     // Actions menu (hidden by default)
     const actionsMenu = document.createElement('div');
