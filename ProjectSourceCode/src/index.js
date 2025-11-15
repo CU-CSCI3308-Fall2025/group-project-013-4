@@ -256,7 +256,6 @@ app.get('/settings', async (req, res) => {
 // Friends page
 app.get('/friends', protect, (req, res) => {
   res.render('pages/friends', {
-    user: req.user,
     isFriends: true,
     title: 'Friends',
     year: new Date().getFullYear()
