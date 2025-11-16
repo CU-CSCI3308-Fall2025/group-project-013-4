@@ -79,6 +79,46 @@
     }
   }
 
+  async function fallbackReverseGeocode(latitude, longitude) {
+    const url = new URL("https://nominatim.openstreetmap.org/reverse");
+    url.searchParams.set("format", "jsonv2");
+    url.searchParams.set("lat", latitude);
+    url.searchParams.set("lon", longitude);
+    url.searchParams.set("zoom", "16");
+    url.searchParams.set("addressdetails", "1");
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    try {
+      const response = await fetch(url.toString(), {
+        headers: { Accept: "application/json" },
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Reverse geocode request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      const displayName = data?.display_name || data?.name;
+      if (!displayName) {
+        return null;
+      }
+
+      return {
+        name: data?.name || displayName,
+        address: displayName,
+        displayText: displayName,
+      };
+    } catch (error) {
+      console.warn("Fallback reverse geocoding failed", error);
+      return null;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
   function buildSuggestionElement(item) {
     if (!state.suggestionsEl) return;
     const btn = document.createElement("button");
@@ -227,6 +267,24 @@
         const { latitude, longitude } = pos.coords;
         const ready = await ensureGoogleServices();
 
+        const applyFallbackOrCoords = async () => {
+          const fallbackResult = await fallbackReverseGeocode(latitude, longitude);
+          if (fallbackResult) {
+            applySelectedLocation({
+              ...fallbackResult,
+              lat: latitude,
+              lng: longitude,
+            });
+            return;
+          }
+
+          applySelectedLocation({
+            name: `Lat ${latitude.toFixed(5)}, Lng ${longitude.toFixed(5)}`,
+            lat: latitude,
+            lng: longitude,
+          });
+        };
+
         if (ready && window.google?.maps) {
           state.locationBias = new google.maps.LatLng(latitude, longitude);
         }
@@ -257,7 +315,7 @@
         if (ready && state.geocoder) {
           state.geocoder.geocode(
             { location: { lat: latitude, lng: longitude } },
-            (results, status) => {
+            async (results, status) => {
               if (status === "OK" && results?.length) {
                 applySelectedLocation({
                   name: results[0].formatted_address,
@@ -268,20 +326,12 @@
                   displayText: results[0].formatted_address,
                 }, { keepSuggestions: true });
               } else {
-                applySelectedLocation({
-                  name: `Lat ${latitude.toFixed(5)}, Lng ${longitude.toFixed(5)}`,
-                  lat: latitude,
-                  lng: longitude,
-                });
+                await applyFallbackOrCoords();
               }
             }
           );
         } else {
-          applySelectedLocation({
-            name: `Lat ${latitude.toFixed(5)}, Lng ${longitude.toFixed(5)}`,
-            lat: latitude,
-            lng: longitude,
-          });
+          await applyFallbackOrCoords();
         }
       },
       () => {
