@@ -50,6 +50,11 @@ CREATE TABLE IF NOT EXISTS posts (
   category VARCHAR(100),
   description TEXT,
   image_url TEXT,
+  location_name TEXT,
+  location_address TEXT,
+  location_lat DOUBLE PRECISION,
+  location_lng DOUBLE PRECISION,
+  location_place_id TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
 

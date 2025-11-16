@@ -79,9 +79,27 @@ window.buildPostHTML = function (post) {
       amount: post.amount,
       category: post.category,
       description: post.description,
-      image_url: post.image_url
+      image_url: post.image_url,
+      location_name: post.location_name,
+      location_address: post.location_address,
+      location_lat: post.location_lat,
+      location_lng: post.location_lng,
+      location_place_id: post.location_place_id
     })
   );
+
+  const locationDisplay = post.location_name || post.location_address;
+  const locationAddress = post.location_address && post.location_address !== (post.location_name || "")
+    ? post.location_address
+    : "";
+
+  const mapsQuery = locationDisplay
+    ? encodeURIComponent(post.location_address || post.location_name)
+    : "";
+
+  const mapsLink = locationDisplay
+    ? `https://www.google.com/maps/search/?api=1&query=${mapsQuery}${post.location_place_id ? `&query_place_id=${encodeURIComponent(post.location_place_id)}` : ""}`
+    : null;
 
   return `
     <div class="post-card" data-post-id="${post.id}">
@@ -104,6 +122,19 @@ window.buildPostHTML = function (post) {
 
       ${desc ? `<p class="post-description">${desc}</p>` : ""}
       ${img}
+      ${locationDisplay ? `
+        <div class="post-location">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 21c-4.418 0-8-4.03-8-9s3.582-9 8-9 8 4.03 8 9-3.582 9-8 9z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          <div class="post-location-details">
+            <div class="post-location-title">${locationDisplay}</div>
+            ${locationAddress ? `<div class="post-location-address">${locationAddress}</div>` : ""}
+            ${mapsLink ? `<a class="post-location-link" href="${mapsLink}" target="_blank" rel="noopener">Open in Google Maps</a>` : ""}
+          </div>
+        </div>
+      ` : ""}
 
       ${canEdit ? `
         <div class="post-actions">
