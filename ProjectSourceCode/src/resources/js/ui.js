@@ -49,12 +49,12 @@ window.renderLeaders = function () {
       <div class="leader-item">
         <div class="leader-info">
           <div class="leader-avatar rank-${leader.rank}">${leader.avatar}</div>
-          <div>
+          <div class="leader-details">
             <h3>${leader.name}</h3>
-            <p>$${leader.saved.toFixed(2)}</p>
+            <p>Saved $${leader.saved.toFixed(2)}</p>
           </div>
         </div>
-        <span>${leader.rank === 1 ? "🥇" : leader.rank === 2 ? "🥈" : "🥉"}</span>
+        <span class="leader-medal">${leader.rank === 1 ? "🥇" : leader.rank === 2 ? "🥈" : "🥉"}</span>
       </div>
       `
     );
