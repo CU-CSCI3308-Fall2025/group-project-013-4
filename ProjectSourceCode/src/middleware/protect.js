@@ -1,4 +1,7 @@
 const jwt = require('jsonwebtoken');
+const { requireEnv } = require('../utils/env');
+
+const jwtSecret = requireEnv('JWT_SECRET');
 
 const protect = (req, res, next) => {
   let token = null;
@@ -14,10 +17,7 @@ const protect = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'supersecretjwt'
-    );
+    const decoded = jwt.verify(token, jwtSecret);
     req.user = decoded;
     next();
   } catch (error) {
