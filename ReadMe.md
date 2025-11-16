@@ -15,3 +15,8 @@ How to run the tests
 
 Link to the deployed application
 
+Environment variables
+---------------------
+
+* `GOOGLE_MAPS_API_KEY` – Optional but recommended for the social feed. When present, WalletWatch loads Google Maps' Places library to power the "Use my location" button and autocomplete dropdown inside the "Add Post" modal. Without the key, users can still type locations manually, but mapping features are disabled.
+
