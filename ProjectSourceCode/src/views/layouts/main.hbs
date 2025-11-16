@@ -31,15 +31,6 @@
 
     <!-- HOME PAGE + FEED MODULES -->
     {{#if isHome}}
-      {{#if googleMapsApiKey}}
-        <script
-          id="googleMapsApiScript"
-          src="https://maps.googleapis.com/maps/api/js?key={{googleMapsApiKey}}&libraries=places"
-          async
-          defer
-        ></script>
-      {{/if}}
-      <script src="/resources/js/posts.location.js"></script>
       <script src="/resources/js/posts.js"></script>
       <script src="/resources/js/posts.modal.js"></script>
       <script src="/resources/js/posts.stream.js"></script>

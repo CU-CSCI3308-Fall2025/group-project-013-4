@@ -48,10 +48,6 @@ window.populatePostForm = function (post) {
   document.getElementById("postCategory").value = post.category ?? "";
   document.getElementById("postDescription").value = post.description ?? "";
 
-  if (window.PostLocation) {
-    window.PostLocation.setFromPost(post);
-  }
-
   window.editingPostId = post.id;
   window.editingPostImageUrl = post.image_url || null;
 
@@ -69,10 +65,6 @@ window.resetPostForm = function () {
 
   window.editingPostId = null;
   window.editingPostImageUrl = null;
-
-  if (window.PostLocation) {
-    window.PostLocation.reset();
-  }
 
   document.getElementById("postImage").value = "";
   document.getElementById("postModalTitle").textContent = "Create a New Post";
@@ -96,10 +88,6 @@ window.submitPostForm = async function () {
   const fileInput = document.getElementById("postImage");
   if (fileInput?.files?.length) {
     formData.append("image", fileInput.files[0]);
-  }
-
-  if (window.PostLocation) {
-    window.PostLocation.appendToFormData(formData);
   }
 
   const endpoint = window.editingPostId

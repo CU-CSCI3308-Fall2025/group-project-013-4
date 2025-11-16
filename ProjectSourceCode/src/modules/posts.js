@@ -41,12 +41,6 @@ const sanitizeText = value => {
   return trimmed.length ? trimmed : null;
 };
 
-const sanitizeCoordinate = value => {
-  if (value === undefined || value === null || value === "") return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
 /* ----------------------------- POSTS FEATURE ----------------------------- */
 
 // GET FEED POSTS
@@ -72,30 +66,13 @@ router.post("/", protect, postUpload.single("image"), async (req, res) => {
   const category = sanitizeText(req.body.category);
   const description = sanitizeText(req.body.description);
   const imageUrl = req.file ? `/resources/uploads/posts/${req.file.filename}` : null;
-  const locationName = sanitizeText(req.body.location_name);
-  const locationAddress = sanitizeText(req.body.location_address);
-  const locationPlaceId = sanitizeText(req.body.location_place_id);
-  const locationLat = sanitizeCoordinate(req.body.location_lat);
-  const locationLng = sanitizeCoordinate(req.body.location_lng);
 
   try {
     const result = await pool.query(
-      `INSERT INTO posts (user_id, amount, category, description, image_url,
-                          location_name, location_address, location_lat, location_lng, location_place_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO posts (user_id, amount, category, description, image_url)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [
-        userId,
-        amount,
-        category,
-        description,
-        imageUrl,
-        locationName,
-        locationAddress,
-        locationLat,
-        locationLng,
-        locationPlaceId
-      ]
+      [userId, amount, category, description, imageUrl]
     );
 
     const newPost = result.rows[0];
@@ -142,26 +119,6 @@ router.put("/:id", protect, postUpload.single("image"), async (req, res) => {
       ? sanitizeText(body.description)
       : post.description;
 
-    const updatedLocationName = Object.prototype.hasOwnProperty.call(body, "location_name")
-      ? sanitizeText(body.location_name)
-      : post.location_name;
-
-    const updatedLocationAddress = Object.prototype.hasOwnProperty.call(body, "location_address")
-      ? sanitizeText(body.location_address)
-      : post.location_address;
-
-    const updatedLocationLat = Object.prototype.hasOwnProperty.call(body, "location_lat")
-      ? sanitizeCoordinate(body.location_lat)
-      : post.location_lat;
-
-    const updatedLocationLng = Object.prototype.hasOwnProperty.call(body, "location_lng")
-      ? sanitizeCoordinate(body.location_lng)
-      : post.location_lng;
-
-    const updatedLocationPlaceId = Object.prototype.hasOwnProperty.call(body, "location_place_id")
-      ? sanitizeText(body.location_place_id)
-      : post.location_place_id;
-
     let updatedImageUrl = post.image_url;
     if (req.file) {
       removeFileIfExists(post.image_url);
@@ -170,23 +127,10 @@ router.put("/:id", protect, postUpload.single("image"), async (req, res) => {
 
     const result = await pool.query(
       `UPDATE posts
-       SET amount=$1, category=$2, description=$3, image_url=$4,
-           location_name=$5, location_address=$6, location_lat=$7,
-           location_lng=$8, location_place_id=$9
-       WHERE id=$10
+       SET amount=$1, category=$2, description=$3, image_url=$4
+       WHERE id=$5
        RETURNING *`,
-      [
-        updatedAmount,
-        updatedCategory,
-        updatedDescription,
-        updatedImageUrl,
-        updatedLocationName,
-        updatedLocationAddress,
-        updatedLocationLat,
-        updatedLocationLng,
-        updatedLocationPlaceId,
-        postId
-      ]
+      [updatedAmount, updatedCategory, updatedDescription, updatedImageUrl, postId]
     );
 
     res.json(result.rows[0]);

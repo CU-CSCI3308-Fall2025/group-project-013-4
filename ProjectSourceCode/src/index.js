@@ -59,7 +59,6 @@ app.use("/resources", express.static(path.join(__dirname, "resources")));
 --------------------------------------------- */
 app.use(async (req, res, next) => {
   res.locals.user = null;
-  res.locals.googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY || "";
 
   try {
     const token = req.session.token;
