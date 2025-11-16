@@ -13,7 +13,7 @@
     <!-- Main global styles -->
     <link rel="stylesheet" href="/resources/css/style.css" />
 
-    <!-- ✅ Load transaction styles ONLY on /addtransaction -->
+    <!-- Load transaction styles ONLY on /addtransaction -->
     {{#if isAddTransaction}}
       <link rel="stylesheet" href="/resources/css/transactions.css" />
     {{/if}}
@@ -24,14 +24,25 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Global script -->
-    <script src="/resources/js/script.js"></script>
+    <!-- GLOBAL CORE MODULES -->
+    <script src="/resources/js/api.js"></script>
+    <script src="/resources/js/auth.js"></script>
+    <script src="/resources/js/ui.js"></script>
 
-    <!-- ✅ Load transaction.js only on Add Transaction page -->
+    <!-- HOME PAGE + FEED MODULES -->
+    {{#if isHome}}
+      <script src="/resources/js/posts.js"></script>
+      <script src="/resources/js/posts.modal.js"></script>
+      <script src="/resources/js/posts.stream.js"></script>
+      <script src="/resources/js/home.js"></script>
+    {{/if}}
+
+    <!-- ADD TRANSACTION PAGE -->
     {{#if isAddTransaction}}
       <script src="/resources/js/transactions.js"></script>
     {{/if}}
 
+    <!-- SETTINGS PAGE -->
     {{#if isSettings}}
       <script src="/resources/js/settings.js"></script>
     {{/if}}
