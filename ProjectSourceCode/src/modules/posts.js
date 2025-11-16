@@ -51,18 +51,41 @@ const sanitizeCoordinate = value => {
 
 // GET FEED POSTS
 router.get("/", protect, async (req, res) => {
+  const currentUserId = req.user.id;
+
   try {
     const result = await pool.query(
-      `SELECT p.*, u.username, u.profile_picture
-       FROM posts p
-       JOIN users u ON u.id = p.user_id
-       ORDER BY p.created_at DESC`
+      `
+      WITH friend_ids AS (
+        SELECT friend_id AS id
+        FROM friends
+        WHERE user_id = $1 AND status='accepted'
+        
+        UNION
+    
+        SELECT user_id AS id
+        FROM friends
+        WHERE friend_id = $1 AND status='accepted'
+      )
+      
+      SELECT p.*, u.username, u.profile_picture
+      FROM posts p
+      JOIN users u ON u.id = p.user_id
+      WHERE 
+        p.user_id = $1
+        OR p.user_id IN (SELECT id FROM friend_ids)
+      ORDER BY p.created_at DESC;
+      `,
+      [currentUserId]
     );
+
     res.json(result.rows);
   } catch (err) {
+    console.error("Error fetching posts:", err);
     res.status(500).json({ error: "Error fetching posts" });
   }
 });
+
 
 // ADD POST
 router.post("/", protect, postUpload.single("image"), async (req, res) => {
