@@ -91,6 +91,38 @@
             <textarea class="form-control" id="postDescription" rows="3" placeholder="Add an optional note..."></textarea>
           </div>
           <div class="mb-3">
+            <label class="form-label">Where did this happen?</label>
+            <div class="location-search-wrapper">
+              <div class="location-input-group">
+                <button type="button" class="btn btn-outline-success" id="useMyLocationBtn">
+                  Use my location
+                </button>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="postLocationSearch"
+                  placeholder="Search for a spot or type it manually"
+                  autocomplete="off"
+                />
+                <button type="button" class="btn btn-outline-secondary" id="clearLocationBtn" title="Clear location">
+                  Clear
+                </button>
+              </div>
+              <div id="locationSuggestions" class="location-suggestions" role="listbox"></div>
+              <div class="form-text">
+                We will show your friends where the deal is happening. Location is optional.
+                {{#unless googleMapsApiKey}}
+                  <strong>Tip:</strong> Add a Google Maps API key to enable automatic suggestions.
+                {{/unless}}
+              </div>
+            </div>
+            <input type="hidden" id="postLocationName" />
+            <input type="hidden" id="postLocationAddress" />
+            <input type="hidden" id="postLocationLat" />
+            <input type="hidden" id="postLocationLng" />
+            <input type="hidden" id="postLocationPlaceId" />
+          </div>
+          <div class="mb-3">
             <label class="form-label">Image</label>
             <div class="image-upload-control">
               <input type="file" id="postImage" accept="image/*" class="d-none" />
