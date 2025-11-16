@@ -9,6 +9,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   await window.loadPosts();
   window.startPostStream();
 
+  // If the user shared a transaction, prefill a post and open the modal
+  let draftFromTransaction = null;
+  try {
+    draftFromTransaction = sessionStorage.getItem("postDraftFromTransaction");
+  } catch (err) {
+    console.warn("Unable to read transaction draft from storage", err);
+  }
+
+  if (draftFromTransaction) {
+    sessionStorage.removeItem("postDraftFromTransaction");
+
+    try {
+      const draft = JSON.parse(draftFromTransaction);
+      window.prefillNewPost(draft, { title: "Share a Transaction" });
+    } catch (err) {
+      console.warn("Could not parse transaction draft", err);
+    }
+  }
+
   // Modal events
   const addForm = document.getElementById("addPostForm");
   if (addForm) {
