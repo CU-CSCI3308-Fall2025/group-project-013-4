@@ -5,10 +5,12 @@ services:
     image: postgres:15
     container_name: walletwatch-db
     restart: always
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: walletwatch_user
-      POSTGRES_PASSWORD: walletwatch_pass
-      POSTGRES_DB: walletwatch
+      POSTGRES_USER: ${DB_USER:?DB_USER is required}
+      POSTGRES_PASSWORD: ${DB_PASS:?DB_PASS is required}
+      POSTGRES_DB: ${DB_NAME:?DB_NAME is required}
     ports:
       - '5432:5432'
     volumes:
@@ -25,14 +27,8 @@ services:
     command: sh -c "npm run testandrun"
     ports:
       - '3000:3000'
-    environment:
-      PORT: 3000
-      DB_HOST: db
-      DB_USER: walletwatch_user
-      DB_PASS: walletwatch_pass
-      DB_NAME: walletwatch
-      SESSION_SECRET: keyboardcat
-      JWT_SECRET: supersecretjwt
+    env_file:
+      - .env
     depends_on:
       - db
 

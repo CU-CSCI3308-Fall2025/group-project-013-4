@@ -7,6 +7,10 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 dotenv.config();
 
+const { requireEnv } = require("./utils/env");
+const sessionSecret = requireEnv("SESSION_SECRET");
+const jwtSecret = requireEnv("JWT_SECRET");
+
 // DB connection
 const pool = require("./config/db");
 
@@ -45,7 +49,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "keyboardcat",
+    secret: sessionSecret,
     saveUninitialized: false,
     resave: false,
   })
@@ -66,10 +70,7 @@ app.use(async (req, res, next) => {
     if (!token) return next();
 
     const jwt = require("jsonwebtoken");
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "supersecretjwt"
-    );
+    const decoded = jwt.verify(token, jwtSecret);
 
     const result = await pool.query("SELECT * FROM users WHERE id = $1", [
       decoded.id,

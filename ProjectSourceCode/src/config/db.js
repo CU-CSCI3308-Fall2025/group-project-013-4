@@ -1,11 +1,12 @@
 const { Pool } = require('pg');
+const { requireEnv } = require('../utils/env');
 
 const pool = new Pool({
-  user: process.env.DB_USER || 'walletwatch_user',
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'walletwatch',
-  password: process.env.DB_PASS || 'walletwatch_pass',
-  port: Number(process.env.DB_PORT) || 5432
+  user: requireEnv('DB_USER'),
+  host: requireEnv('DB_HOST'),
+  database: requireEnv('DB_NAME'),
+  password: requireEnv('DB_PASS'),
+  port: Number(requireEnv('DB_PORT'))
 });
 
 pool

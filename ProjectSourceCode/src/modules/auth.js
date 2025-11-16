@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const protect = require('../middleware/protect');
+const { requireEnv } = require('../utils/env');
 
 // MULTER FILE UPLOAD SETUP (EXACT COPY)
 const multer = require('multer');
@@ -32,8 +33,9 @@ const profileStorage = multer.diskStorage({
 const profileUpload = multer({ storage: profileStorage });
 
 // TOKEN GENERATOR (UNCHANGED)
+const jwtSecret = requireEnv('JWT_SECRET');
 const generateToken = id =>
-  jwt.sign({ id }, process.env.JWT_SECRET || 'supersecretjwt', {
+  jwt.sign({ id }, jwtSecret, {
     expiresIn: '2h'
   });
 
