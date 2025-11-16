@@ -11,12 +11,12 @@ Kishore Karthikeyan, Matt Topham, Aiden Johnson, Ellie Odau, Harrie Ha, Emir Sim
 - **Database:** PostgreSQL 15 seeded through SQL scripts in `src/init_data`.
 - **Infrastructure:** Docker Compose for orchestrating the Node.js app container and the PostgreSQL database.
 - **Testing:** Mocha, Chai, and Chai-HTTP for API and integration tests.
-- **Client integrations:** Google Maps JavaScript + Places API for address autocomplete in the posting workflow.
+- **Client integrations:** Google Maps JavaScript + Places API for address autocomplete.
 
 ## Prerequisites
 1. **Git** – clone/pull the repository updates.
 2. **Docker Desktop or Docker Engine + Docker Compose v2** – runs the full stack locally without installing Node/PostgreSQL directly.
-3. **Google Cloud account** – required if you want Maps autocomplete; provides a Google Maps API key.
+3. **Google Cloud account** – required if you want Maps autocomplete and suggestions.
 
 ## Getting started
 1. **Pull the latest code**
