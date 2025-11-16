@@ -55,6 +55,7 @@ function renderTransactions(transactions) {
           <div class="transaction-amount">${amount.toFixed(2)}</div>
 
           <div class="transaction-actions">
+              <button class="share-btn" data-id="${t.id}" title="Share as post">📤</button>
               <button class="edit-btn" data-id="${t.id}">✏️</button>
               <button class="delete-btn" data-id="${t.id}">🗑️</button>
           </div>
@@ -66,6 +67,10 @@ function renderTransactions(transactions) {
     // ✅ ATTACH LISTENERS INSIDE THE LOOP
     card.querySelector(".delete-btn").addEventListener("click", () => {
       deleteTransaction(t.id);
+    });
+
+    card.querySelector(".share-btn").addEventListener("click", () => {
+      shareTransaction(t);
     });
 
     card.querySelector(".edit-btn").addEventListener("click", () => {
@@ -176,6 +181,28 @@ function openEditModal(transaction) {
 
   // Store the ID so we know this is an update
   transactionForm.setAttribute("data-editing-id", transaction.id);
+}
+
+// Share a transaction as a prefilled post on the home feed
+function shareTransaction(transaction) {
+  if (!transaction) return;
+
+  const parsedAmount = Number(transaction.amount);
+  const amountValue = Number.isFinite(parsedAmount) ? parsedAmount.toFixed(2) : "";
+
+  const draft = {
+    amount: amountValue,
+    category: transaction.category || "",
+    description: transaction.description || ""
+  };
+
+  try {
+    sessionStorage.setItem("postDraftFromTransaction", JSON.stringify(draft));
+  } catch (err) {
+    console.warn("Unable to cache transaction draft", err);
+  }
+
+  window.location.href = "/";
 }
 
 //Converts the date of the transaction in a usuable format

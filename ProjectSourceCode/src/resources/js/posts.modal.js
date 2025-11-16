@@ -62,6 +62,38 @@ window.populatePostForm = function (post) {
   modal.show();
 };
 
+// Prefill a new post (e.g., from a shared transaction) and open the modal
+window.prefillNewPost = function (draft = {}, options = {}) {
+  window.resetPostForm();
+
+  const amountInput = document.getElementById("postAmount");
+  const categoryInput = document.getElementById("postCategory");
+  const descriptionInput = document.getElementById("postDescription");
+
+  if (amountInput && draft.amount !== undefined && draft.amount !== null && String(draft.amount).trim() !== "") {
+    const parsedAmount = Number(draft.amount);
+    if (Number.isFinite(parsedAmount)) {
+      amountInput.value = parsedAmount.toFixed(2);
+    }
+  }
+
+  if (categoryInput && draft.category) {
+    categoryInput.value = draft.category;
+  }
+
+  if (descriptionInput && draft.description) {
+    descriptionInput.value = draft.description;
+  }
+
+  if (options.title) {
+    document.getElementById("postModalTitle").textContent = options.title;
+  }
+
+  const modalEl = document.getElementById("addPostModal");
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  modal.show();
+};
+
 // Reset modal to blank state
 window.resetPostForm = function () {
   const form = document.getElementById("addPostForm");
