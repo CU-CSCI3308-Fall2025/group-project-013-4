@@ -29,7 +29,6 @@ async function renderFriends() {
 
     //PFP
     const profilePic = document.createElement('img');
-    console.log(friend.username, friend.profile_picture);
     profilePic.src = friend.profile_picture || "/resources/img/PFP_Default.jpeg";
     profilePic.classList.add('profile-pic');
     left.appendChild(profilePic);
@@ -106,11 +105,22 @@ async function renderPendingRequests() {
 
 requests.forEach(req => {
   const div = document.createElement('div');
-  div.classList.add('pending-item');
+  div.classList.add('search-result');
 
-  const usernameSpan = document.createElement('span');
-  usernameSpan.textContent = req.username;
-  div.appendChild(usernameSpan);
+  const left = document.createElement('div');
+  left.classList.add('left-side');
+
+  //PFP
+  const profilePic = document.createElement('img');
+  profilePic.src = req.profile_picture || "/resources/img/PFP_Default.jpeg";
+  profilePic.classList.add('profile-pic');
+  left.appendChild(profilePic);
+
+  // Friend name
+  const nameSpan = document.createElement('span');
+  nameSpan.textContent = req.username;
+  left.appendChild(nameSpan);
+  div.appendChild(left);
 
   // Button container (side by side)
   const btnContainer = document.createElement('div');
@@ -279,7 +289,22 @@ if (searchInput && resultsList) {
         users.forEach(user => {
           const div = document.createElement('div');
           div.classList.add('search-result');
-          div.textContent = user.username;
+       
+          const left = document.createElement('div');
+          left.classList.add('left-side');
+
+          //PFP
+          const profilePic = document.createElement('img');
+          profilePic.src = user.profile_picture || "/resources/img/PFP_Default.jpeg";
+          profilePic.classList.add('profile-pic');
+          left.appendChild(profilePic);
+
+          // Friend name
+          const nameSpan = document.createElement('span');
+          nameSpan.textContent = user.username;
+          left.appendChild(nameSpan);
+
+          div.appendChild(left);
 
           const addBtn = document.createElement('button');
           addBtn.classList.add('btn-small', 'btn-accept');
@@ -301,6 +326,16 @@ if (searchInput && resultsList) {
   });
 }
 } //working
+
+
+
+
+
+
+
+
+
+
 
 
 

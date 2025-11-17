@@ -115,7 +115,7 @@ router.get("/pending", protect, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT f.id, u.id as sender_id, u.username
+      `SELECT f.id, u.id as sender_id, u.username, u.profile_picture
        FROM friends f
        JOIN users u ON u.id=f.user_id
        WHERE f.status='pending'
@@ -160,7 +160,7 @@ router.get("/search", protect, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT id, username
+      `SELECT id, username, profile_picture
        FROM users
        WHERE username ILIKE $1
        AND id <> $2
