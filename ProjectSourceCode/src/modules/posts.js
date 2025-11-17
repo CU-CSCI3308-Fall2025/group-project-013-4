@@ -47,6 +47,42 @@ const sanitizeCoordinate = value => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+const sanitizeTimestamp = value => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const parseBooleanFlag = value => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") return value.toLowerCase() === "true";
+  return false;
+};
+
+async function addTransactionIfMissing({ userId, amount, category, description, createdAt }) {
+  const txDescription = description || "";
+
+  const existing = await pool.query(
+    `SELECT id FROM transactions
+     WHERE user_id=$1 AND amount=$2 AND category=$3 AND description=$4 AND created_at=$5
+     LIMIT 1`,
+    [userId, amount, category, txDescription, createdAt]
+  );
+
+  if (existing.rowCount > 0) {
+    return existing.rows[0];
+  }
+
+  const inserted = await pool.query(
+    `INSERT INTO transactions (user_id, amount, category, description, created_at)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING *`,
+    [userId, amount, category, txDescription, createdAt]
+  );
+
+  return inserted.rows[0];
+}
+
 /* ----------------------------- POSTS FEATURE ----------------------------- */
 
 // GET FEED POSTS
@@ -100,6 +136,14 @@ router.post("/", protect, postUpload.single("image"), async (req, res) => {
   const locationPlaceId = sanitizeText(req.body.location_place_id);
   const locationLat = sanitizeCoordinate(req.body.location_lat);
   const locationLng = sanitizeCoordinate(req.body.location_lng);
+  const addToTransactions = parseBooleanFlag(req.body.add_to_transactions);
+  const transactionCreatedAt = sanitizeTimestamp(req.body.created_at) || new Date();
+
+  if (addToTransactions && (amount === null || category === null)) {
+    return res.status(400).json({
+      error: "Amount and category are required to add this post to transactions."
+    });
+  }
 
   try {
     const result = await pool.query(
@@ -122,6 +166,16 @@ router.post("/", protect, postUpload.single("image"), async (req, res) => {
     );
 
     const newPost = result.rows[0];
+
+    if (addToTransactions && amount !== null && category !== null) {
+      await addTransactionIfMissing({
+        userId,
+        amount,
+        category,
+        description,
+        createdAt: transactionCreatedAt
+      });
+    }
 
     if (global.broadcastNewPost) {
       global.broadcastNewPost(newPost);
@@ -185,6 +239,16 @@ router.put("/:id", protect, postUpload.single("image"), async (req, res) => {
       ? sanitizeText(body.location_place_id)
       : post.location_place_id;
 
+    const addToTransactions = parseBooleanFlag(body.add_to_transactions);
+    const transactionCreatedAt =
+      sanitizeTimestamp(body.created_at) || sanitizeTimestamp(post.created_at) || new Date();
+
+    if (addToTransactions && (updatedAmount === null || updatedCategory === null)) {
+      return res.status(400).json({
+        error: "Amount and category are required to add this post to transactions."
+      });
+    }
+
     let updatedImageUrl = post.image_url;
     if (req.file) {
       removeFileIfExists(post.image_url);
@@ -211,6 +275,16 @@ router.put("/:id", protect, postUpload.single("image"), async (req, res) => {
         postId
       ]
     );
+
+    if (addToTransactions && updatedAmount !== null && updatedCategory !== null) {
+      await addTransactionIfMissing({
+        userId,
+        amount: updatedAmount,
+        category: updatedCategory,
+        description: updatedDescription,
+        createdAt: transactionCreatedAt
+      });
+    }
 
     res.json(result.rows[0]);
   } catch (err) {
