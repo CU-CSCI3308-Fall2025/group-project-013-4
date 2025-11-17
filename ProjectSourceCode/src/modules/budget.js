@@ -14,13 +14,12 @@ router.post("/", protect, async (req, res) => {
     return res.status(400).json({ message: "Category and amount are required." });
 
   try {
-    // This "UPSERT" query uses the UNIQUE(user_id, category) constraint.
-    // It tries to INSERT. If it conflicts (already exists), it will UPDATE.
+   
     const result = await pool.query(
       `INSERT INTO budgets (user_id, category, limit_amount, period)
        VALUES ($1, $2, $3, $4)
-       ON CONFLICT (user_id, category)
-       DO UPDATE SET amount = $3, period = $4
+       ON CONFLICT (user_id, category, period)
+       DO UPDATE SET limit_amount = $3, period = $4
        RETURNING *`,
       [userId, category, amount, period || 'monthly']
     );
@@ -53,7 +52,7 @@ router.get("/summary", protect, async (req, res) => {
         b.category,
         b.limit_amount AS budget_amount,
         COALESCE(cms.total_spent, 0) AS total_spent,
-        (b.amount - COALESCE(cms.total_spent, 0)) AS remaining_amount
+        (b.limit_amount - COALESCE(cms.total_spent, 0)) AS remaining_amount
       FROM budgets b
       LEFT JOIN current_month_spending cms ON b.category = cms.category
       WHERE b.user_id = $1

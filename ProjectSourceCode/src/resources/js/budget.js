@@ -92,10 +92,9 @@ document.addEventListener("DOMContentLoaded", () => {
           {
             label: "Total Spent",
             data: data.map((d) => d.total_spent),
-            // Optional: Add some nice colors
             backgroundColor: [
-              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
-              '#9966FF', '#FF9F40', '#C9CBCF', '#E7E9ED'
+              '#ed1847ff', '#1278bcff', '#9fff56ff', '#010f0fff',
+              '#9966FF', '#f5820eff', '#d2e555ff', '#E7E9ED'
             ],
           },
         ],
@@ -112,7 +111,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 let label = context.label || "";
                 let value = context.parsed;
                 
-                // Find the total sum of all data points
                 const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                 
                 let percentage = ((value / total) * 100).toFixed(1);
@@ -125,6 +123,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  // --- Load all data on page load ---
   loadSummaryData();
 });
