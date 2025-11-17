@@ -23,6 +23,7 @@ const friendsModule = require("./modules/friends");
 const postsModule = require("./modules/posts");
 const transactionsModule = require("./modules/transactions");
 const pagesModule = require("./modules/pages");
+const budgetModule = require("./modules/budget");
 
 const app = express();
 
@@ -104,6 +105,9 @@ app.use("/api/posts", postsModule);
 
 // TRANSACTIONS
 app.use("/api/transactions", transactionsModule);
+
+// BUDGETS
+app.use("/api/budgets", budgetModule);
 
 /* --------------------------------------------
    DEBUG (optional)

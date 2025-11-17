@@ -26,7 +26,7 @@
 
         <div class="form-group">
           <label>Budget Amount ($)</label>
-          <input type="number" id="budgetAmount" step="0.01" required />
+          <input type="number" id="budgetAmount" step="0.01" min = "0" required />
         </div>
 
         <div class="form-group">
@@ -44,7 +44,7 @@
 
    
 
-    <!--graph,pie chart etc. -->
+    <!--pie chart etc. -->
     <section class="chart-section">
       <h2>Spending Breakdown/Summary</h2>
     </section>
@@ -52,5 +52,8 @@
 </main>
 
 {{> footer year=year }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="/resources/js/budget.js"></script>
 
 

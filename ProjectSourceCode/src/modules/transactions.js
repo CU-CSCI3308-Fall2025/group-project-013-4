@@ -85,4 +85,25 @@ router.put("/:id", protect, async (req, res) => {
   }
 });
 
+// GET total spending by category for the current month
+router.get("/summary", protect, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT category, SUM(amount) as total_spent
+       FROM transactions
+       WHERE user_id = $1
+         AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
+         AND created_at < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
+       GROUP BY category
+       HAVING SUM(amount) > 0
+       ORDER BY total_spent DESC`,
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
