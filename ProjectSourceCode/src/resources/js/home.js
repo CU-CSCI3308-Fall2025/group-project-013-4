@@ -22,7 +22,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
       const draft = JSON.parse(draftFromTransaction);
-      window.prefillNewPost(draft, { title: "Share a Transaction" });
+      window.prefillNewPost(draft, {
+        title: "Share a Transaction",
+        addToTransactionsDefault: false
+      });
     } catch (err) {
       console.warn("Could not parse transaction draft", err);
     }

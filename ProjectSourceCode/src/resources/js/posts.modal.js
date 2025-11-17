@@ -48,6 +48,14 @@ window.populatePostForm = function (post) {
   document.getElementById("postCategory").value = post.category ?? "";
   document.getElementById("postDescription").value = post.description ?? "";
 
+  const addToTransactionsInput = document.getElementById("postAddToTransactions");
+  if (addToTransactionsInput) addToTransactionsInput.checked = false;
+
+  const createdAtInput = document.getElementById("postCreatedAt");
+  if (createdAtInput && post.created_at) {
+    createdAtInput.value = post.created_at;
+  }
+
   if (window.PostLocation) {
     window.PostLocation.setFromPost(post);
   }
@@ -89,6 +97,18 @@ window.prefillNewPost = function (draft = {}, options = {}) {
     document.getElementById("postModalTitle").textContent = options.title;
   }
 
+  const addToTransactionsInput = document.getElementById("postAddToTransactions");
+  if (addToTransactionsInput) {
+    const defaultAddToTransactions =
+      options.addToTransactionsDefault ?? true;
+    addToTransactionsInput.checked = !!defaultAddToTransactions;
+  }
+
+  const createdAtInput = document.getElementById("postCreatedAt");
+  if (createdAtInput) {
+    createdAtInput.value = draft.created_at || createdAtInput.value || new Date().toISOString();
+  }
+
   const modalEl = document.getElementById("addPostModal");
   const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
   modal.show();
@@ -102,12 +122,20 @@ window.resetPostForm = function () {
   window.editingPostId = null;
   window.editingPostImageUrl = null;
 
+  const addToTransactionsInput = document.getElementById("postAddToTransactions");
+  if (addToTransactionsInput) addToTransactionsInput.checked = true;
+
   if (window.PostLocation) {
     window.PostLocation.reset();
   }
 
   document.getElementById("postImage").value = "";
   document.getElementById("postModalTitle").textContent = "Create a New Post";
+
+  const createdAtInput = document.getElementById("postCreatedAt");
+  if (createdAtInput) {
+    createdAtInput.value = new Date().toISOString();
+  }
 
   window.updateImageFileName();
 };
@@ -124,6 +152,14 @@ window.submitPostForm = async function () {
   formData.append("amount", document.getElementById("postAmount").value.trim());
   formData.append("category", document.getElementById("postCategory").value);
   formData.append("description", document.getElementById("postDescription").value.trim());
+
+  const addToTransactionsInput = document.getElementById("postAddToTransactions");
+  formData.append("add_to_transactions", addToTransactionsInput?.checked ? "true" : "false");
+
+  const createdAtInput = document.getElementById("postCreatedAt");
+  if (createdAtInput?.value) {
+    formData.append("created_at", createdAtInput.value);
+  }
 
   const fileInput = document.getElementById("postImage");
   if (fileInput?.files?.length) {
