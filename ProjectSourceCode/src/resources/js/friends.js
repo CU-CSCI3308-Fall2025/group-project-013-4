@@ -23,16 +23,28 @@ async function renderFriends() {
     const div = document.createElement('div');
     div.classList.add('friend-item');
 
+    //PFP and username grouping
+    const left = document.createElement('div');
+    left.classList.add('left-side');
+
+    //PFP
+    const profilePic = document.createElement('img');
+    profilePic.src = friend.profile_picture || "/resources/img/PFP_Default.jpeg";
+    profilePic.classList.add('profile-pic');
+    left.appendChild(profilePic);
+
     // Friend name
     const nameSpan = document.createElement('span');
     nameSpan.textContent = friend.username;
-    div.appendChild(nameSpan);
+    left.appendChild(nameSpan);
 
     // Three-dot button (hidden until hover)
     const dotsBtn = document.createElement('button');
     dotsBtn.textContent = '⋮';
     dotsBtn.classList.add('dots-btn');
+    div.appendChild(left);
     div.appendChild(dotsBtn);
+
 
     // Actions menu (hidden by default)
     const actionsMenu = document.createElement('div');
@@ -93,11 +105,22 @@ async function renderPendingRequests() {
 
 requests.forEach(req => {
   const div = document.createElement('div');
-  div.classList.add('pending-item');
+  div.classList.add('search-result');
 
-  const usernameSpan = document.createElement('span');
-  usernameSpan.textContent = req.username;
-  div.appendChild(usernameSpan);
+  const left = document.createElement('div');
+  left.classList.add('left-side');
+
+  //PFP
+  const profilePic = document.createElement('img');
+  profilePic.src = req.profile_picture || "/resources/img/PFP_Default.jpeg";
+  profilePic.classList.add('profile-pic');
+  left.appendChild(profilePic);
+
+  // Friend name
+  const nameSpan = document.createElement('span');
+  nameSpan.textContent = req.username;
+  left.appendChild(nameSpan);
+  div.appendChild(left);
 
   // Button container (side by side)
   const btnContainer = document.createElement('div');
@@ -266,7 +289,22 @@ if (searchInput && resultsList) {
         users.forEach(user => {
           const div = document.createElement('div');
           div.classList.add('search-result');
-          div.textContent = user.username;
+       
+          const left = document.createElement('div');
+          left.classList.add('left-side');
+
+          //PFP
+          const profilePic = document.createElement('img');
+          profilePic.src = user.profile_picture || "/resources/img/PFP_Default.jpeg";
+          profilePic.classList.add('profile-pic');
+          left.appendChild(profilePic);
+
+          // Friend name
+          const nameSpan = document.createElement('span');
+          nameSpan.textContent = user.username;
+          left.appendChild(nameSpan);
+
+          div.appendChild(left);
 
           const addBtn = document.createElement('button');
           addBtn.classList.add('btn-small', 'btn-accept');
@@ -288,6 +326,16 @@ if (searchInput && resultsList) {
   });
 }
 } //working
+
+
+
+
+
+
+
+
+
+
 
 
 

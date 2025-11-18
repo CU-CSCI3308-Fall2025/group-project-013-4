@@ -1,8 +1,5 @@
 {{> header isFriends=true }}
 
-<script src="/resources/js/friends.js"></script>
-<link rel="stylesheet" href="/resources/css/friends.css" />
-
 <main class="main-container friends-container">
   <div class="content-grid">
     <aside class="sidebar">
@@ -31,17 +28,14 @@
       </div>
     </aside>
 
-    <section class="feed">
-      <div class="feed-header">
+    <section class="friends">
+      <div class="friends-header">
         <h1>Friends</h1>
         <p>Manage your friends and pending requests</p>
           <form id="friendSearchForm" class="auth-form">
             <input type="text" id="friendSearch" placeholder="Search for friends by username...">
           </form>
           <div id="searchResults"></div>
-      </div>
-      <div class="posts-container">
-        <p>[placeholder - view friends' posts here]</p>
       </div>
     </section>
   </div>

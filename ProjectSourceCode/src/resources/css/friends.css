@@ -1,3 +1,38 @@
+.friends {
+    display: flex;
+    flex-direction: column;
+}
+
+.friends-header {
+  text-align: left;
+  margin-bottom: 2rem;
+}
+
+.friends-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.friends-header p {
+  color: #64748b;
+  font-size: 1.125rem;
+}
+
+.left-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;     /* spacing between pfp + username */
+}
+
+.profile-pic {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .friend-item {
   display: flex;
   justify-content: space-between;
@@ -55,19 +90,29 @@
   display: flex;
   gap: 8px;
   margin-top: 6px;
+  margin-left: 8px;
 }
+
+.search-result {
+  display: flex;
+  align-items: left;
+  gap: 2px;
+  padding: 8px;
+}
+
 
 .btn-small {
   padding: 6px 10px;
   font-size: 14px;
   border-radius: 6px;
-  flex: 1;
+  flex: 0;
 }
 
 .btn-accept {
   background: linear-gradient(to right, #10b981, #0d9488);
   color: white;
   border: none;
+  flex: 0;
 }
 
 .btn-accept:hover {
@@ -78,6 +123,7 @@
   background: transparent;
   color: #10b981;
   border: 2px solid #0d9488;
+  flex: 0;
 }
 
 .btn-decline:hover {
