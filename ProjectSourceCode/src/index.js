@@ -23,6 +23,7 @@ const friendsModule = require("./modules/friends");
 const postsModule = require("./modules/posts");
 const transactionsModule = require("./modules/transactions");
 const pagesModule = require("./modules/pages");
+const budgetModule = require("./modules/budget");
 
 const app = express();
 
@@ -107,6 +108,8 @@ app.use("/api/transactions", transactionsModule);
 
 // LEADERBOARD
 app.use("/api/leaderboard", require("./modules/leaderboard"));
+// BUDGETS
+app.use("/api/budgets", budgetModule);
 
 /* --------------------------------------------
    DEBUG (optional)
