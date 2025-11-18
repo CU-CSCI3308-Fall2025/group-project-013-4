@@ -106,6 +106,8 @@ app.use("/api/posts", postsModule);
 // TRANSACTIONS
 app.use("/api/transactions", transactionsModule);
 
+// LEADERBOARD
+app.use("/api/leaderboard", require("./modules/leaderboard"));
 // BUDGETS
 app.use("/api/budgets", budgetModule);
 
