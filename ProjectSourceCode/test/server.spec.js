@@ -1,6 +1,7 @@
 // ********************** Initialize server **********************************
 
 const server = require('../src/index'); //TODO: Make sure the path to your index.js is correctly added
+const pool = require('../src/config/db');
 
 // ********************** Import Libraries ***********************************
 
@@ -8,7 +9,7 @@ const chai = require('chai'); // Chai HTTP provides an interface for live integr
 const chaiHttp = require('chai-http');
 chai.should();
 chai.use(chaiHttp);
-const {assert, expect} = chai;
+const { assert, expect } = chai;
 
 // ********************** DEFAULT WELCOME TESTCASE ****************************
 
@@ -32,10 +33,11 @@ describe('Server!', () => {
 // ********************************************************************************
 
 describe('Testing /api/auth/register API', () => {
-  
+  let uniqueEmail;
+
   // ✅ Positive testcase
   it('Positive: should register a user successfully', done => {
-    const uniqueEmail = `testuser_${Date.now()}@example.com`;
+    uniqueEmail = `testuser_${Date.now()}@example.com`;
     const uniqueUsername = `user_${Date.now()}`;
 
     chai
@@ -56,8 +58,18 @@ describe('Testing /api/auth/register API', () => {
       });
   });
 
-  
-    // ✅ Negative testcase
+  after(async () => {
+    if (uniqueEmail) {
+      try {
+        await pool.query('DELETE FROM users WHERE email = $1', [uniqueEmail]);
+      } catch (err) {
+        console.error('Error cleaning up test user:', err);
+      }
+    }
+  });
+
+
+  // ✅ Negative testcase
   it('Negative: should return 400 for missing required fields', done => {
     chai
       .request(server)
@@ -78,11 +90,12 @@ describe('Testing /api/auth/register API', () => {
 });
 
 describe('Testing /api/auth/login API', () => {
+  let uniqueEmail;
 
   // ✅ Positive testcase
   it('Positive: should log in a user with valid credentials', done => {
     const timestamp = Date.now();
-    const uniqueEmail = `loginuser_${timestamp}@example.com`;
+    uniqueEmail = `loginuser_${timestamp}@example.com`;
     const uniqueUsername = `login_${timestamp}`;
     const password = 'LoginPass123!';
 
@@ -115,6 +128,16 @@ describe('Testing /api/auth/login API', () => {
       });
   });
 
+  after(async () => {
+    if (uniqueEmail) {
+      try {
+        await pool.query('DELETE FROM users WHERE email = $1', [uniqueEmail]);
+      } catch (err) {
+        console.error('Error cleaning up test user:', err);
+      }
+    }
+  });
+
   // ✅ Negative testcase
   it('Negative: should reject invalid credentials', done => {
     chai
@@ -130,4 +153,8 @@ describe('Testing /api/auth/login API', () => {
         done();
       });
   });
+});
+
+after(() => {
+  server.close();
 });
