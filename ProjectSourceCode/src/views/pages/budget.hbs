@@ -26,7 +26,7 @@
 
         <div class="form-group">
           <label>Budget Amount ($)</label>
-          <input type="number" id="budgetAmount" step="0.01" min = "0" required />
+          <input type="number" id="budgetAmount" step="0.01" min="0" required />
         </div>
 
         <div class="form-group">
@@ -42,11 +42,35 @@
 
     <hr style="margin: 2rem 0;">
 
-   
 
-    <!--pie chart etc. -->
+
+    <section class="envelopes-section">
+      <div class="section-header">
+        <h2>Your Budgets</h2>
+        
+      </div>
+
+      <!-- Total Budget / Spent / Remaining -->
+      <div id="envelopesSummary" class="envelopes-summary">
+      </div>
+
+      <div id="envelopesList" class="envelopes-grid">
+        <div id="envelopesEmptyState" class="empty-state">
+          <p>No envelopes/budgets available!</p>
+          <p>Use the form above to set a budget for a category.</p>
+        </div>
+      </div>
+    </section>
+
+    <hr style="margin: 2rem 0;">
+
+    <!-- pie chart -->
     <section class="chart-section">
-      <h2>Spending Breakdown/Summary</h2>
+      <h2>Spending Breakdown (Current Month)</h2>
+      
+      <div class="chart-container">
+        <canvas id="budgetChart"></canvas>
+      </div>
     </section>
   </div>
 </main>
@@ -55,5 +79,3 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script src="/resources/js/budget.js"></script>
-
-
