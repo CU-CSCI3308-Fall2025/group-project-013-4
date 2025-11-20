@@ -1,10 +1,8 @@
-{{> header isLeaderboard=true}}
-
 <div class="leaderboard-container">
 
   <div class="leaderboard-header">
     <h1>Leaderboard</h1>
-    <p>Compare spending with friends or see the global rankings</p>
+    <p>Ranked by how much of their monthly budget users are saving.</p>
   </div>
 
   <div class="leaderboard-tabs">
@@ -13,11 +11,9 @@
   </div>
 
   <div id="leaderboard-list" class="leaderboard-list">
-    <!-- JS will populate rows -->
+    <!-- Populated by leaderboard.js -->
   </div>
 
 </div>
 
 <script src="/src/resources/js/leaderboard.js"></script>
-
-{{> footer year=year}}

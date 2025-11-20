@@ -8,16 +8,45 @@ function getCurrentUserId(req) {
   return req.user.id;
 }
 
-/* ---------------- GLOBAL LEADERBOARD ---------------- */
+/* ==========================================================================
+   GLOBAL SAVINGS LEADERBOARD
+   ========================================================================== */
+
 router.get("/global", protect, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT u.id, u.username, u.profile_picture,
-             COALESCE(SUM(t.amount), 0) AS total_spending
+      WITH user_budgets AS (
+        SELECT 
+          user_id, 
+          COALESCE(SUM(limit_amount), 0) AS total_budget
+        FROM budgets
+        WHERE period = 'monthly'
+        GROUP BY user_id
+      ),
+      user_spending AS (
+        SELECT 
+          user_id, 
+          COALESCE(SUM(amount), 0) AS total_spending
+        FROM transactions
+        WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE)
+          AND created_at < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
+        GROUP BY user_id
+      )
+      SELECT 
+        u.id,
+        u.username,
+        u.profile_picture,
+        COALESCE(b.total_budget, 0)   AS total_budget,
+        COALESCE(s.total_spending, 0) AS total_spending,
+        CASE
+          WHEN COALESCE(b.total_budget, 0) > 0 THEN
+            (b.total_budget - COALESCE(s.total_spending, 0)) / b.total_budget
+          ELSE NULL
+        END AS savings_percentage
       FROM users u
-      LEFT JOIN transactions t ON u.id = t.user_id
-      GROUP BY u.id
-      ORDER BY total_spending DESC;
+      LEFT JOIN user_budgets b ON u.id = b.user_id
+      LEFT JOIN user_spending s ON u.id = s.user_id
+      ORDER BY savings_percentage DESC NULLS LAST;
     `);
 
     res.json(result.rows);
@@ -27,7 +56,10 @@ router.get("/global", protect, async (req, res) => {
   }
 });
 
-/* ---------------- FRIENDS-ONLY LEADERBOARD ---------------- */
+/* ==========================================================================
+   FRIENDS-ONLY SAVINGS LEADERBOARD
+   ========================================================================== */
+
 router.get("/friends", protect, async (req, res) => {
   const userId = getCurrentUserId(req);
 
@@ -41,15 +73,41 @@ router.get("/friends", protect, async (req, res) => {
           END AS friend_id
         FROM friends f
         WHERE (f.user_id = $1 OR f.friend_id = $1)
-        AND f.status = 'accepted'
+          AND f.status = 'accepted'
+      ),
+      user_budgets AS (
+        SELECT 
+          user_id, 
+          COALESCE(SUM(limit_amount), 0) AS total_budget
+        FROM budgets
+        WHERE period = 'monthly'
+        GROUP BY user_id
+      ),
+      user_spending AS (
+        SELECT 
+          user_id, 
+          COALESCE(SUM(amount), 0) AS total_spending
+        FROM transactions
+        WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE)
+          AND created_at < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
+        GROUP BY user_id
       )
-      SELECT u.id, u.username, u.profile_picture,
-             COALESCE(SUM(t.amount), 0) AS total_spending
+      SELECT 
+        u.id,
+        u.username,
+        u.profile_picture,
+        COALESCE(b.total_budget, 0)   AS total_budget,
+        COALESCE(s.total_spending, 0) AS total_spending,
+        CASE
+          WHEN COALESCE(b.total_budget, 0) > 0 THEN
+            (b.total_budget - COALESCE(s.total_spending, 0)) / b.total_budget
+          ELSE NULL
+        END AS savings_percentage
       FROM users u
       JOIN friend_list fl ON fl.friend_id = u.id
-      LEFT JOIN transactions t ON t.user_id = u.id
-      GROUP BY u.id
-      ORDER BY total_spending DESC;
+      LEFT JOIN user_budgets b ON u.id = b.user_id
+      LEFT JOIN user_spending s ON u.id = s.user_id
+      ORDER BY savings_percentage DESC NULLS LAST;
     `);
 
     res.json(result.rows);
