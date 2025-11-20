@@ -1,0 +1,34 @@
+/* variables.css — define light & dark theme variables */
+:root {
+  /* Light mode */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --accent: #10b981;
+  --accent-hover: #059669;
+  --border: #e2e8f0;
+  --card-bg: #ffffff;
+  --error: #ef4444;
+  --success: #10b981;
+  --muted: #94a3b8;
+  --highlight: #fef3c7;
+  --highlight-text: #b45309;
+}
+
+:root.dark {
+  /* Dark mode */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --accent: #34d399;
+  --accent-hover: #10b981;
+  --border: #334155;
+  --card-bg: #1e293b;
+  --error: #f87171;
+  --success: #34d399;
+  --muted: #cbd5e1;
+  --highlight: #78350f;
+  --highlight-text: #facc15;
+}
