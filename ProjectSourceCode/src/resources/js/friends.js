@@ -16,6 +16,7 @@ async function renderFriends() {
   friendsList.innerHTML = '';
   if (!friends.length) {
     friendsList.textContent = "You don't have any friends yet! Send a request to get started.";
+    friendsList.classList.add('empty-text');
     return;
   }
 
@@ -100,6 +101,7 @@ async function renderPendingRequests() {
   pendingList.innerHTML = '';
   if (!requests.length) {
     pendingList.textContent = 'No pending friend requests.';
+    pendingList.classList.add('empty-text');
     return;
   }
 

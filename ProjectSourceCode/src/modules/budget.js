@@ -14,7 +14,6 @@ router.post("/", protect, async (req, res) => {
     return res.status(400).json({ message: "Category and amount are required." });
 
   try {
-   
     const result = await pool.query(
       `INSERT INTO budgets (user_id, category, limit_amount, period)
        VALUES ($1, $2, $3, $4)
@@ -30,6 +29,7 @@ router.post("/", protect, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 router.get("/summary", protect, async (req, res) => {
