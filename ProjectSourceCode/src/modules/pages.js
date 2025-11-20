@@ -97,7 +97,7 @@ router.get('/profile/:id', protect, async (req, res) => {
       return res.status(404).render('pages/404', { message: 'User not found' });
     }
 
-    const user = userResult.rows[0];
+    const user_pfp = userResult.rows[0];
 
     // Get user's posts
     const postsResult = await pool.query(
@@ -110,8 +110,8 @@ router.get('/profile/:id', protect, async (req, res) => {
     const posts = postsResult.rows;
 
     res.render('pages/profile', {
-      title: `${user.username}'s Profile`,
-      user,
+      title: `${user_pfp.username}'s Profile`,
+      user_pfp,
       posts,
       year: new Date().getFullYear()
     });

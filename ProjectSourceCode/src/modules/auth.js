@@ -138,6 +138,22 @@ router.delete('/delete', protect, async (req, res) => {
   const userId = req.user.id;
 
   try {
+    
+    const picResult = await pool.query(
+      'SELECT profile_picture FROM users WHERE id = $1',
+      [userId]
+    );
+
+    const profilePath = picResult.rows[0]?.profile_picture;
+
+    if (profilePath && !profilePath.includes('PFP_Default.jpeg')) {
+      const fullPath = path.join(__dirname, '..', profilePath.replace(/^\//, ''));
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+        console.log("Deleted user's profile picture:", fullPath);
+      }
+    }
+
     const result = await pool.query(
       'DELETE FROM users WHERE id = $1 RETURNING *',
       [userId]
