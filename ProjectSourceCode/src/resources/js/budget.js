@@ -4,6 +4,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const envelopesList = document.getElementById("envelopesList");
   const envelopesSummary = document.getElementById("envelopesSummary");
   const envelopesEmptyState = document.getElementById("envelopesEmptyState");
+  const budgetModal = document.getElementById("budgetModal");
+  const openBudgetModal = document.getElementById("openBudgetModal");
+  const closeModal = document.querySelector(".close-modal");
+
+  openBudgetModal.addEventListener("click", () => {
+    budgetModal.style.display = "flex";
+  });
+
+  closeModal.addEventListener("click", () => {
+    budgetModal.style.display = "none";
+  });
+
+  window.addEventListener("click", (e) => {
+    if (e.target === budgetModal) {
+      budgetModal.style.display = "none";
+    }
+  });
 
   const token = localStorage.getItem("token");
   if (!token) {
@@ -11,6 +28,18 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "/login";
     return;
   }
+
+  const chartColors = {
+  Food: "#f3c258",
+  Groceries: "#86d9a7",
+  Transportation: "#75b7f2",
+  Shopping: "#f59ecb",
+  Entertainment: "#c7b4f2",
+  Bills: "#f29797",
+  Health: "#70d3cf",
+  Other: "#bfcad3",
+  };
+
 
   //save/update budget
   if (budgetForm) {
@@ -114,10 +143,12 @@ document.addEventListener("DOMContentLoaded", () => {
       card.dataset.category = category;
 
       card.innerHTML = `
-        <header class="envelope-header">
-          <h3>${category}</h3>
-          <span class="period-label">${period}</span>
+      <div class="envelope-header-row">
+        <header class="envelope-header" data-category="${category}">
+          ${category}
         </header>
+        <span class="period-label">${period}</span>
+      </div>
 
         <div class="envelope-amounts">
           <div><span>Budget:</span> <strong>$${budget.toFixed(2)}</strong></div>
@@ -153,6 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     envelopesSummary.innerHTML = `
       <div class="summary-card">
+        <h2>Summary</h2>
         <div class="summary-item">
           <span class="label">Total Budget</span>
           <span class="value">$${totalBudget.toFixed(2)}</span>
@@ -177,12 +209,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!summaryRows || summaryRows.length === 0) {
       chartSection.innerHTML =
-        "<h2>Spending Breakdown</h2><p>No budgets set for this month.</p>";
+        "<h2 class='chart-title'>Monthly Spending Breakdown</h2><p class='empty-text'>No budgets set for this month.</p>";
+      return;
+    }
+
+    else if (summaryRows.every(row => Number(row.total_spent) === 0)) {
+      chartSection.innerHTML =
+        "<h2 class='chart-title'>Monthly Spending Breakdown</h2><p class='empty-text'>Log a transaction to see your monthly spending!</p>";
       return;
     }
 
     chartSection.innerHTML =
-      '<h2>Spending Breakdown (Current Month)</h2>';
+      "<h2 class='chart-title'>Monthly Spending Breakdown</h2>";
+
     const canvas = document.createElement("canvas");
     canvas.style.maxHeight = "400px";
     canvas.style.maxWidth = "400px";
@@ -191,6 +230,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const labels = summaryRows.map((row) => row.category || "Other");
     const values = summaryRows.map((row) => Number(row.total_spent) || 0);
+
+    const backgroundColors = summaryRows.map(
+    (row) => chartColors[row.category] || chartColors["Other"]
+);
 
     if (spendingChartInstance) {
       spendingChartInstance.destroy();
@@ -204,16 +247,8 @@ document.addEventListener("DOMContentLoaded", () => {
           {
             label: "Total Spent",
             data: values,
-            backgroundColor: [
-              "#ed1847ff",
-              "#1278bcff",
-              "#9fff56ff",
-              "#010f0fff",
-              "#9966FF",
-              "#f5820eff",
-              "#d2e555ff",
-              "#E7E9ED",
-            ],
+            backgroundColor: backgroundColors,
+            borderWidth: 0,
           },
         ],
       },
@@ -221,19 +256,33 @@ document.addEventListener("DOMContentLoaded", () => {
         responsive: true,
         plugins: {
           legend: {
-            position: "top",
+            position: "bottom",
+            // align: "start",
+            labels: {
+              color: "#64748b",
+              font: {
+                size: 12,
+              },
+              boxWidth: 12,
+              padding: 8,
+            },
           },
           tooltip: {
+            backgroundColor: "#fff",
+            titleColor: "#1e293b",
+            bodyColor: "#1e293b",
+            borderColor: "#ccc",
+            borderWidth: 1,
+            padding: 8,
+            displayColors: true,  
             callbacks: {
               label: function (context) {
                 let label = context.label || "";
                 let value = context.parsed;
-
                 const total = context.chart.data.datasets[0].data.reduce(
                   (a, b) => a + b,
                   0
                 );
-
                 let percentage = total > 0
                   ? ((value / total) * 100).toFixed(1)
                   : "0.0";

@@ -129,3 +129,8 @@
 .btn-decline:hover {
   background: rgba(0, 184, 148, 0.1);
 }
+
+.empty-text {
+   color: #64748b;
+   font-size: 1rem;
+}

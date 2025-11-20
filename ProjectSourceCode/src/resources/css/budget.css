@@ -1,12 +1,335 @@
-.charts-container {
-  display: flex;           
+.main-container {
+   color: #1e293b;
+}
+
+.budget-header {
+  text-align: left;
+  margin-bottom: 2rem;
+}
+
+.budget-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 1rem;
+}
+
+.budget-header p {
+  color: #64748b;
+  font-size: 1.125rem;
+}
+
+.chart-title {
+  text-align: left;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1rem;
+}
+
+.chart-container {
+    width: 100%;
+  /* display: flex;           
   flex-wrap: wrap;       
   justify-content: center; 
-  gap: 2rem;             
+  gap: 2rem;              */
 }
 
 .chart-section {
-  flex-grow: 1;           
+  /* flex-grow: 1;           
   flex-basis: 400px;         
-  min-width: 300px;
+  min-width: 300px; */
+  width: 100%;
+  height: auto;
 }
+
+.chart-section canvas {
+  width: 100% !important;
+  height: auto !important;
+  display: block;
+}
+
+.summary-card {
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  max-width: 100%;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #1e293b;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+.summary-item .label {
+  font-weight: 500;
+}
+
+.summary-item .value {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.summary-card h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1rem;
+}
+
+.empty-text {
+   color: #64748b;
+   font-size: 1rem;
+}
+
+.budget-form-section {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  padding: 1rem;
+  max-width: 280px;
+  margin-bottom: 1.5rem;
+}
+
+.budget-form-section h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+}
+
+.budget-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.budget-form .form-group label {
+    display: block;
+    font-weight: 500;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+}
+
+.budget-form input[type="number"],
+.budget-form select {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    color: #1e293b;
+    transition: all 0.2s;
+    font-family: inherit;
+    background: white;
+}
+
+.budget-form input:focus,
+.budget-form select:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.budget-form input:hover,
+.budget-form select:hover {
+    border-color: #cbd5e1;
+}
+
+.budget-form select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem;
+}
+
+
+
+/* Container wrapping all the envelope cards */
+#envelopesList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.envelope-card {
+  position: relative;
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+  padding-top: 1rem; /* space for the accent bar */
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-bottom: 1rem;
+}
+
+
+.envelope-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.envelope-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.envelope-header {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.period-label {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.envelope-amounts div {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.envelope-progress {
+  margin-top: 0.4rem;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  background-color: #e5e7eb;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 5px 0 0 5px;
+  transition: width 0.3s ease;
+}
+
+.envelope-ok .progress-fill {
+  background-color: #10b981;
+}
+
+.envelope-warning .progress-fill {
+  background-color: #fbbf24;
+}
+
+.envelope-over .progress-fill {
+  background-color: #ef4444;
+}
+
+.progress-label {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.envelope-card[data-category="Food"] .envelope-header {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.envelope-card[data-category="Groceries"] .envelope-header {
+  background: #dcfce7;
+  color: #059669;
+}
+
+.envelope-card[data-category="Transportation"] .envelope-header {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.envelope-card[data-category="Shopping"] .envelope-header {
+  background: #fce7f3;
+  color: #be185d;
+}
+
+.envelope-card[data-category="Entertainment"] .envelope-header {
+  background: #ede9fe;
+  color: #6b21a8;
+}
+
+.envelope-card[data-category="Bills"] .envelope-header {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.envelope-card[data-category="Health"] .envelope-header {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.envelope-card[data-category="Other"] .envelope-header {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* Modal Background */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal h2{
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1rem;
+}
+
+/* Modal Window */
+.modal-content {
+  background: white;
+  width: 90%;
+  max-width: 400px;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* X Button */
+.close-modal {
+  float: right;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+
+

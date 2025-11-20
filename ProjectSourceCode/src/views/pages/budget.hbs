@@ -1,81 +1,83 @@
 {{> header isBudget=true }}
 
-<main class="main-container">
-  <div class="budget-page">
-    <h1>Budgets & Spending</h1>
+<main class="main-container budget-container">
+  <div class="content-grid">
 
-    <!--set budget-->
-    <section class="budget-form-section">
-      <h2>Set Budget</h2>
-      <form id="budgetForm" class="budget-form">
-        <div class="form-group">
-          <label>Category</label>
-          <select id="budgetCategory" required>
-            <!--same categories as transactions -->
-            <option value="">Select a category</option>
-            <option>Food</option>
-            <option>Groceries</option>
-            <option>Transportation</option>
-            <option>Shopping</option>
-            <option>Entertainment</option>
-            <option>Bills</option>
-            <option>Health</option>
-            <option>Other</option>
-          </select>
-        </div>
+        <aside class="sidebar">
 
-        <div class="form-group">
-          <label>Budget Amount ($)</label>
-          <input type="number" id="budgetAmount" step="0.01" min="0" required />
-        </div>
+        {{!-- <div class="card"> --}}
+            <section class="chart-section">
+              <div class="chart-container">
+                <canvas id="budgetChart"></canvas>
+              </div>
+            </section>
+        {{!-- </div> --}}
 
-        <div class="form-group">
-          <label>Period</label>
-          <select id="budgetPeriod">
-            <option value="monthly" selected>Monthly</option>
-          </select>
-        </div>
+        <div id="envelopesSummary" class="envelopes-summary"></div>
 
-        <button type="submit" class="btn-primary">Save Budget</button>
-      </form>
-    </section>
+        <button id="openBudgetModal" class="btn-primary set-budget-btn">
+          + Set Budget
+        </button>
 
-    <hr style="margin: 2rem 0;">
+        <div id="budgetModal" class="modal">
+          <div class="modal-content">
+            <span class="close-modal">&times;</span>
+                <!--set budget-->
+                  <h2>Set Budget</h2>
+                  <form id="budgetForm" class="budget-form">
+                    <div class="form-group">
+                      <label>Category</label>
+                      <select id="budgetCategory" required>
+                        <!--same categories as transactions -->
+                        <option value="">Select a category</option>
+                        <option>Food</option>
+                        <option>Groceries</option>
+                        <option>Transportation</option>
+                        <option>Shopping</option>
+                        <option>Entertainment</option>
+                        <option>Bills</option>
+                        <option>Health</option>
+                        <option>Other</option>
+                      </select>
+                    </div>
 
+                    <div class="form-group">
+                      <label>Budget Amount ($)</label>
+                      <input type="number" id="budgetAmount" step="0.01" min="0" required />
+                    </div>
 
+                    <div class="form-group">
+                      <label>Period</label>
+                      <select id="budgetPeriod">
+                        <option value="monthly" selected>Monthly</option>
+                      </select>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Save Budget</button>
+                  </form>
+                </div>
+              </div>      
+
+      </aside>
+
+    <div class="budget-header">
+        <h1>Your Budgets</h1>
 
     <section class="envelopes-section">
-      <div class="section-header">
-        <h2>Your Budgets</h2>
-        
-      </div>
-
       <!-- Total Budget / Spent / Remaining -->
-      <div id="envelopesSummary" class="envelopes-summary">
-      </div>
-
-      <div id="envelopesList" class="envelopes-grid">
-        <div id="envelopesEmptyState" class="empty-state">
-          <p>No envelopes/budgets available!</p>
-          <p>Use the form above to set a budget for a category.</p>
-        </div>
-      </div>
-    </section>
-
-    <hr style="margin: 2rem 0;">
-
-    <!-- pie chart -->
-    <section class="chart-section">
-      <h2>Spending Breakdown (Current Month)</h2>
       
-      <div class="chart-container">
-        <canvas id="budgetChart"></canvas>
-      </div>
-    </section>
+
+        <div id="envelopesList" class="envelopes-grid">
+          <div id="envelopesEmptyState" class="empty-text">
+            <p>No envelopes/budgets available!</p>
+            <p>Use the form above to set a budget for a category.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
   </div>
 </main>
 
 {{> footer year=year }}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script src="/resources/js/budget.js"></script>
