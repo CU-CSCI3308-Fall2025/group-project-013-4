@@ -8,16 +8,20 @@ const pool = require('../config/db');
 
 // 🔒 Helper: redirect unauthenticated users to /login
 function ensureLoggedIn(req, res) {
-  // Render cannot read localStorage; only check for session tokens if using stateful hosting
-  if (!req.headers.authorization && !req.session?.token) {
+  // Render has no persistent sessions — rely on JWT or session
+  const hasSession = Boolean(req.session?.token);
+  const hasAuthHeader = Boolean(req.headers.authorization);
+
+  if (!hasSession && !hasAuthHeader) {
     res.redirect('/login');
     return false;
   }
+
   return true;
 }
 
 /* ------------------------------- HOME PAGE ------------------------------- */
-router.get('/', async (req, res) => {
+router.get('/', (req, res) => {
   if (!ensureLoggedIn(req, res)) return;
 
   res.render('pages/home', {
@@ -28,8 +32,8 @@ router.get('/', async (req, res) => {
 });
 
 /* ----------------------------- LEADERBOARD ------------------------------- */
-router.get('/leaderboard', async (req, res) => {
-  if (!ensureLoggedIn(req, res)) return; 
+router.get('/leaderboard', (req, res) => {
+  if (!ensureLoggedIn(req, res)) return;
 
   res.render('pages/leaderboard', {
     title: 'Leaderboard',
@@ -60,7 +64,7 @@ router.get('/logout', (req, res) => {
 });
 
 /* ------------------------------- SETTINGS -------------------------------- */
-router.get('/settings', async (req, res) => {
+router.get('/settings', (req, res) => {
   if (!ensureLoggedIn(req, res)) return;
 
   res.render('pages/settings', {
@@ -71,7 +75,7 @@ router.get('/settings', async (req, res) => {
 });
 
 /* -------------------------------- FRIENDS -------------------------------- */
-router.get('/friends', async (req, res) => {
+router.get('/friends', (req, res) => {
   if (!ensureLoggedIn(req, res)) return;
 
   res.render('pages/friends', {
@@ -82,7 +86,7 @@ router.get('/friends', async (req, res) => {
 });
 
 /* --------------------------- ADD TRANSACTION ----------------------------- */
-router.get('/addtransaction', async (req, res) => {
+router.get('/addtransaction', (req, res) => {
   if (!ensureLoggedIn(req, res)) return;
 
   res.render('pages/transaction', {
@@ -93,7 +97,7 @@ router.get('/addtransaction', async (req, res) => {
 });
 
 /* --------------------------------- BUDGET -------------------------------- */
-router.get('/budget', async (req, res) => {
+router.get('/budget', (req, res) => {
   if (!ensureLoggedIn(req, res)) return;
 
   res.render('pages/budget', {
