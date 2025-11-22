@@ -8,8 +8,8 @@ const pool = require('../config/db');
 
 // 🔒 Helper: redirect unauthenticated users to /login
 function ensureLoggedIn(req, res) {
-  const token = req.session?.token || req.headers.authorization;
-  if (!token) {
+  // Render cannot read localStorage; only check for session tokens if using stateful hosting
+  if (!req.headers.authorization && !req.session?.token) {
     res.redirect('/login');
     return false;
   }
@@ -29,6 +29,8 @@ router.get('/', async (req, res) => {
 
 /* ----------------------------- LEADERBOARD ------------------------------- */
 router.get('/leaderboard', async (req, res) => {
+  if (!ensureLoggedIn(req, res)) return; 
+
   res.render('pages/leaderboard', {
     title: 'Leaderboard',
     isLeaderboard: true,
