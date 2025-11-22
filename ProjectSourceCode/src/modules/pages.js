@@ -1,10 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const protect = require('../middleware/protect');
 const pool = require('../config/db');
 
-// HOME PAGE
+/* -------------------------------------------------------------------------- */
+/*                             PAGE ROUTES (UI)                               */
+/* -------------------------------------------------------------------------- */
+
+// 🔒 Helper: redirect unauthenticated users to /login
+function ensureLoggedIn(req, res) {
+  const token = req.session?.token || req.headers.authorization;
+  if (!token) {
+    res.redirect('/login');
+    return false;
+  }
+  return true;
+}
+
+/* ------------------------------- HOME PAGE ------------------------------- */
 router.get('/', async (req, res) => {
+  if (!ensureLoggedIn(req, res)) return;
+
   res.render('pages/home', {
     title: 'Home',
     isHome: true,
@@ -12,7 +27,7 @@ router.get('/', async (req, res) => {
   });
 });
 
-// LEADERBOARD PAGE
+/* ----------------------------- LEADERBOARD ------------------------------- */
 router.get('/leaderboard', async (req, res) => {
   res.render('pages/leaderboard', {
     title: 'Leaderboard',
@@ -21,7 +36,7 @@ router.get('/leaderboard', async (req, res) => {
   });
 });
 
-// LOGIN PAGE
+/* --------------------------------- LOGIN --------------------------------- */
 router.get('/login', (req, res) => {
   res.render('pages/login', {
     title: 'Login',
@@ -29,7 +44,7 @@ router.get('/login', (req, res) => {
   });
 });
 
-// REGISTER PAGE
+/* ------------------------------- REGISTER -------------------------------- */
 router.get('/register', (req, res) => {
   res.render('pages/register', {
     title: 'Register',
@@ -37,15 +52,15 @@ router.get('/register', (req, res) => {
   });
 });
 
-// LOGOUT
+/* -------------------------------- LOGOUT --------------------------------- */
 router.get('/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.redirect('/login');
-  });
+  req.session.destroy(() => res.redirect('/login'));
 });
 
-// SETTINGS PAGE
+/* ------------------------------- SETTINGS -------------------------------- */
 router.get('/settings', async (req, res) => {
+  if (!ensureLoggedIn(req, res)) return;
+
   res.render('pages/settings', {
     title: 'Settings',
     isSettings: true,
@@ -53,8 +68,10 @@ router.get('/settings', async (req, res) => {
   });
 });
 
-// FRIENDS PAGE
-router.get('/friends', protect, (req, res) => {
+/* -------------------------------- FRIENDS -------------------------------- */
+router.get('/friends', async (req, res) => {
+  if (!ensureLoggedIn(req, res)) return;
+
   res.render('pages/friends', {
     isFriends: true,
     title: 'Friends',
@@ -62,8 +79,10 @@ router.get('/friends', protect, (req, res) => {
   });
 });
 
-// ADD TRANSACTION PAGE
-router.get('/addtransaction', protect, (req, res) => {
+/* --------------------------- ADD TRANSACTION ----------------------------- */
+router.get('/addtransaction', async (req, res) => {
+  if (!ensureLoggedIn(req, res)) return;
+
   res.render('pages/transaction', {
     isAddTransaction: true,
     title: 'Add Transaction',
@@ -71,8 +90,10 @@ router.get('/addtransaction', protect, (req, res) => {
   });
 });
 
-// BUDGET PAGE
-router.get('/budget', protect, (req, res) => {
+/* --------------------------------- BUDGET -------------------------------- */
+router.get('/budget', async (req, res) => {
+  if (!ensureLoggedIn(req, res)) return;
+
   res.render('pages/budget', {
     isBudget: true,
     title: 'Budget',
@@ -80,12 +101,13 @@ router.get('/budget', protect, (req, res) => {
   });
 });
 
-// PROFILE PAGE
-router.get('/profile/:id', protect, async (req, res) => {
+/* -------------------------------- PROFILE -------------------------------- */
+router.get('/profile/:id', async (req, res) => {
+  if (!ensureLoggedIn(req, res)) return;
+
   const userId = req.params.id;
 
   try {
-    // Get user info
     const userResult = await pool.query(
       `SELECT id, username, email, profile_picture
        FROM users
@@ -98,21 +120,15 @@ router.get('/profile/:id', protect, async (req, res) => {
     }
 
     const user_pfp = userResult.rows[0];
-
-    // Get user's posts
     const postsResult = await pool.query(
-      `SELECT * FROM posts
-       WHERE user_id = $1
-       ORDER BY created_at DESC`,
+      `SELECT * FROM posts WHERE user_id = $1 ORDER BY created_at DESC`,
       [userId]
     );
-
-    const posts = postsResult.rows;
 
     res.render('pages/profile', {
       title: `${user_pfp.username}'s Profile`,
       user_pfp,
-      posts,
+      posts: postsResult.rows,
       year: new Date().getFullYear()
     });
   } catch (err) {
@@ -121,10 +137,9 @@ router.get('/profile/:id', protect, async (req, res) => {
   }
 });
 
-//For testing purposes
-router.get("/welcome", (req, res) => {
-  res.json({ status: "success", message: "Welcome!" });
+/* -------------------------------- WELCOME -------------------------------- */
+router.get('/welcome', (req, res) => {
+  res.json({ status: 'success', message: 'Welcome!' });
 });
-
 
 module.exports = router;
