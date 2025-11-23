@@ -142,13 +142,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const card = document.createElement("article");
       card.className = `envelope-card envelope-${status}`;
       card.dataset.category = category;
+      card.dataset.id = row.id;
 
       card.innerHTML = `
       <div class="envelope-header-row">
         <header class="envelope-header" data-category="${category}">
           ${category}
         </header>
-        <span class="period-label">${period}</span>
+        <div class="envelope-actions">
+          <span class="period-label">${period}</span>
+          <button class="delete-budget-btn" title="Delete budget" aria-label="Delete budget">
+            &times;
+          </button>
+        </div>
       </div>
 
         <div class="envelope-amounts">
@@ -166,6 +172,41 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
 
       envelopesList.appendChild(card);
+    });
+  }
+
+  // delete envelope actions
+  if (envelopesList) {
+    envelopesList.addEventListener("click", async (event) => {
+      const deleteBtn = event.target.closest(".delete-budget-btn");
+      if (!deleteBtn) return;
+
+      const card = deleteBtn.closest(".envelope-card");
+      const budgetId = card?.dataset.id;
+
+      if (!budgetId) return;
+
+      const confirmed = window.confirm(
+        "Are you sure you want to delete this budget?"
+      );
+
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch(`/api/budgets/${budgetId}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.message || "Failed to delete budget");
+        }
+
+        loadBudgetSummary();
+      } catch (err) {
+        alert(err.message);
+      }
     });
   }
 
