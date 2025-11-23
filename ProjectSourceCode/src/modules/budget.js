@@ -49,8 +49,10 @@ router.get("/summary", protect, async (req, res) => {
         GROUP BY category
       )
       SELECT
+        b.id,
         b.category,
         b.limit_amount AS budget_amount,
+        b.period,
         COALESCE(cms.total_spent, 0) AS total_spent,
         (b.limit_amount - COALESCE(cms.total_spent, 0)) AS remaining_amount
       FROM budgets b
@@ -62,6 +64,28 @@ router.get("/summary", protect, async (req, res) => {
     const result = await pool.query(query, [req.user.id]);
     res.json(result.rows);
     
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// delete a budget
+router.delete("/:id", protect, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM budgets WHERE id = $1 AND user_id = $2 RETURNING *",
+      [id, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Budget not found." });
+    }
+
+    res.json({ message: "Budget deleted.", budget: result.rows[0] });
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: err.message });

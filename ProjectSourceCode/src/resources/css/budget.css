@@ -190,6 +190,12 @@
   margin-bottom: 0.5rem;
 }
 
+.envelope-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .envelope-header {
   display: inline-block;
   font-size: 0.75rem;
@@ -203,6 +209,27 @@
 .period-label {
   font-size: 0.75rem;
   color: #64748b;
+}
+
+.delete-budget-btn {
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s ease;
+}
+
+.delete-budget-btn:hover,
+.delete-budget-btn:focus-visible {
+  background-color: #fee2e2;
+  border-color: #ef4444;
+  color: #b91c1c;
+  outline: none;
 }
 
 .envelope-amounts div {
@@ -275,6 +302,11 @@
 .envelope-card[data-category="Bills"] .envelope-header {
   background: #fee2e2;
   color: #991b1b;
+}
+
+.envelope-card[data-category="Pets"] .envelope-header {
+  background: #fef9c3;
+  color: #92400e;
 }
 
 .envelope-card[data-category="Health"] .envelope-header {
