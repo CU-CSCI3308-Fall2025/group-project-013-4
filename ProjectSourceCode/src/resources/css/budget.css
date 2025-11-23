@@ -277,6 +277,11 @@
   color: #991b1b;
 }
 
+.envelope-card[data-category="Pets"] .envelope-header {
+  background: #fef9c3;
+  color: #92400e;
+}
+
 .envelope-card[data-category="Health"] .envelope-header {
   background: #ccfbf1;
   color: #0f766e;

@@ -223,6 +223,11 @@ transaction-page {
     color: #991b1b;
 }
 
+.transaction-card[data-category="Pets"] .transaction-category {
+    background: #fef9c3;
+    color: #92400e;
+}
+
 .transaction-card[data-category="Health"] .transaction-category {
     background: #ccfbf1;
     color: #0f766e;

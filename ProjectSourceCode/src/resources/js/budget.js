@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
   Shopping: "#f59ecb",
   Entertainment: "#c7b4f2",
   Bills: "#f29797",
+  Pets: "#f7d59c",
   Health: "#70d3cf",
   Other: "#bfcad3",
   };
