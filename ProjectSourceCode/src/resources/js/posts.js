@@ -63,6 +63,7 @@ window.buildPostHTML = function (post) {
 
   const avatar = post.profile_picture || "/resources/img/PFP_Default.jpeg";
   const username = post.username || "WalletWatch User";
+  const profileLink = post.user_id ? `/profile/${post.user_id}` : null;
   const createdAt = post.created_at ? new Date(post.created_at).toLocaleString() : "";
   const amount = post.amount ? Number(post.amount).toFixed(2) : null;
   const category = post.category || "";
@@ -104,13 +105,15 @@ window.buildPostHTML = function (post) {
   return `
     <div class="post-card" data-post-id="${post.id}">
       <div class="post-header">
-        <div class="post-user">
+        <${profileLink ? "a" : "div"} class="post-user" ${
+          profileLink ? `href="${profileLink}" aria-label="View ${username}'s profile"` : ""
+        }>
           <img src="${avatar}" class="post-avatar-img"/>
           <div class="post-user-info">
             <h3>${username}</h3>
             <p>${createdAt}</p>
           </div>
-        </div>
+        </${profileLink ? "a" : "div"}>
 
         ${amount || category ? `
           <div class="post-amount">
