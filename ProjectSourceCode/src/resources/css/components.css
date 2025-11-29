@@ -1,4 +1,21 @@
 /* Leaders List */
+.feed-header {
+  text-align: left;
+  margin-bottom: 1rem;
+}
+
+.feed-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.feed-header p {
+  color: #64748b;
+  font-size: 1.125rem;
+}
+
 .leaders-list {
     display: flex;
     flex-direction: column;
@@ -373,4 +390,34 @@
 
 .image-upload-control .btn {
     border-style: dashed;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #1e293b;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+.summary-item .label {
+  font-weight: 500;
+}
+
+.summary-item .value {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.summary-card h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1rem;
 }

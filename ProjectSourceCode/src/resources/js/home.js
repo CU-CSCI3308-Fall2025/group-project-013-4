@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   leaders = await fetchLeaders();
   renderLeaders(leaders);
-  budgetSummary(user);
+  await budgetSummary();
 
   async function fetchLeaders() {
     try {
@@ -58,8 +58,54 @@ document.addEventListener("DOMContentLoaded", async () => {
     `).join("");
   }
 
-  function budgetSummary(user) {
-  // your logic to update the sidebar budget summary
+  async function budgetSummary() {
+    const container = document.getElementById("envelopesSummary");
+    if (!container) return;
+    try {
+    const res = await fetch("/api/budgets/summary", {
+      headers: {
+        Authorization: `Bearer ${window.API.getToken()}`
+      }
+    });
+    if (!res.ok) throw new Error("Failed to fetch summary");
+    const summaryRows = await res.json();
+
+    const totalBudget = (summaryRows || []).reduce(
+      (sum, row) => sum + (Number(row.budget_amount) || 0),
+      0
+    );
+    const totalSpent = (summaryRows || []).reduce(
+      (sum, row) => sum + (Number(row.total_spent) || 0),
+      0
+    );
+    const remaining = Math.max(0, totalBudget - totalSpent);
+
+    const savingsPct =
+      totalBudget > 0
+        ? ((totalBudget - totalSpent) / totalBudget * 100).toFixed(1) + "%"
+        : "No budget set";
+
+    container.innerHTML = `
+        <div class="summary-item">
+          <span class="label">Total Budget</span>
+          <span class="value">$${totalBudget.toFixed(2)}</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Total Spent</span>
+          <span class="value">$${totalSpent.toFixed(2)}</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Total Remaining</span>
+          <span class="value">$${remaining.toFixed(2)}</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Savings %</span>
+          <span class="value">${savingsPct}</span>
+        </div>
+    `;
+} catch (err) {
+    console.error("Error rendering home budget summary:", err);
+}
   }
 
   // If the user shared a transaction, prefill a post and open the modal
