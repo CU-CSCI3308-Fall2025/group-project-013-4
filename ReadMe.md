@@ -71,8 +71,6 @@ Kishore Karthikeyan, Matt Topham, Aiden Johnson, Ellie Odau, Harrie Ha, Emir Sim
 │   │   │   │   ├── settings.js
 │   │   │   │   ├── transactions.js
 │   │   │   │   └── ui.js
-│   │   │   └── uploads
-│   │   │       └── posts
 │   │   ├── utils
 │   │   │   └── env.js
 │   │   ├── views
@@ -148,7 +146,6 @@ Kishore Karthikeyan, Matt Topham, Aiden Johnson, Ellie Odau, Harrie Ha, Emir Sim
       - **auth.js, budget.js, friends.js, home.js, leaderboard.js, transactions.js, settings.js** – Page-specific scripts.
       - **posts.js, posts.location.js, posts.modal.js, posts.stream.js** – Scripts for posts, location, modals, and post feed.
       - **ui.js** – Shared UI utilities.
-    - **uploads/posts/** – Storage for uploaded post media/files.
   - **utils/env.js** – Helpers for reading and managing environment variables.
   - **views/** – Handlebars templates for server-side rendering:
     - **layouts/main.hbs** – Base layout shared by all pages.
