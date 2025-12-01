@@ -421,3 +421,59 @@
   color: #1e293b;
   margin-bottom: 1rem;
 }
+
+.post-category {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.post-category[data-category="Food"] {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.post-category[data-category="Groceries"] {
+  background: #dcfce7;
+  color: #059669;
+}
+
+.post-category[data-category="Transportation"] {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.post-category[data-category="Shopping"] {
+  background: #fce7f3;
+  color: #be185d;
+}
+
+.post-category[data-category="Entertainment"] {
+  background: #ede9fe;
+  color: #6b21a8;
+}
+
+.post-category[data-category="Bills"] {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.post-category[data-category="Pets"] {
+  background: #fef9c3;
+  color: #92400e;
+}
+
+.post-category[data-category="Health"] {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.post-category[data-category="Other"] {
+  background: #f1f5f9;
+  color: #475569;
+}
+

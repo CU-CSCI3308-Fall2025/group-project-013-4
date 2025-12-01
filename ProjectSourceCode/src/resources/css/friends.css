@@ -23,7 +23,7 @@
 .left-side {
   display: flex;
   align-items: center;
-  gap: 8px;     /* spacing between pfp + username */
+  gap: 8px;
 }
 
 .profile-pic {
@@ -39,7 +39,7 @@
   align-items: center;
   padding: 6px 8px;
   border-bottom: 1px solid #eee;
-  position: relative; /* needed for absolute positioning */
+  position: relative;
 }
 
 /* Dots button */

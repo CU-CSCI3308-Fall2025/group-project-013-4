@@ -224,9 +224,19 @@ document.addEventListener("DOMContentLoaded", () => {
     );
     const remaining = Math.max(0, totalBudget - totalSpent);
 
+    const savingsPct =
+      totalBudget > 0
+        ? ((totalBudget - totalSpent) / totalBudget * 100).toFixed(1) + "%"
+        : "No budget set";
+
     envelopesSummary.innerHTML = `
-      <div class="summary-card">
-        <h2>Summary</h2>
+      <div class="card">
+      <div class="card-header">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-coin"><path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M14.8 9a2 2 0 0 0 -1.8 -1h-2a2 2 0 1 0 0 4h2a2 2 0 1 1 0 4h-2a2 2 0 0 1 -1.8 -1" /><path d="M12 7v10" />
+          </svg>
+          <h2>Summary</h2>
+        </div>
         <div class="summary-item">
           <span class="label">Total Budget</span>
           <span class="value">$${totalBudget.toFixed(2)}</span>
@@ -238,6 +248,10 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="summary-item">
           <span class="label">Remaining</span>
           <span class="value">$${remaining.toFixed(2)}</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Savings %</span>
+          <span class="value">${savingsPct}</span>
         </div>
       </div>
     `;

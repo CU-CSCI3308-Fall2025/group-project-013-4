@@ -29,7 +29,7 @@ async function loadLeaderboard(type) {
       const savingsPct = user.savings_percentage !== null &&
                          user.savings_percentage !== undefined
         ? (user.savings_percentage * 100).toFixed(1) + "%"
-        : "No Budget";
+        : "No budget set";
 
       container.innerHTML += `
         <div class="leaderboard-item ${index < 3 ? "top-three" : ""}">
@@ -39,7 +39,11 @@ async function loadLeaderboard(type) {
 
             <div class="user-section">
               <div class="user-avatar">
-                ${user.username ? user.username.charAt(0).toUpperCase() : "?"}
+                <img 
+                src="${user.profile_picture || '/resources/img/PFP_Default.jpeg'}" 
+                alt="${user.username}" 
+                class="user-avatar-img" 
+                />
               </div>
               <div class="user-info">
                 <h3>${user.username}</h3>
