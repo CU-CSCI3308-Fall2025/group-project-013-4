@@ -49,15 +49,6 @@
   display: block;
 }
 
-.summary-card {
-  background: white;
-  border-radius: 0.75rem;
-  border: 1px solid #e2e8f0;
-  padding: 1.25rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  max-width: 100%;
-}
-
 .summary-item {
   display: flex;
   justify-content: space-between;
@@ -79,13 +70,6 @@
 .summary-item .value {
   font-weight: 600;
   color: #1e293b;
-}
-
-.summary-card h2 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 1rem;
 }
 
 .empty-text {

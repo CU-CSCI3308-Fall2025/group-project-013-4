@@ -1,13 +1,112 @@
 // home.js — only runs on the home page
 
 document.addEventListener("DOMContentLoaded", async () => {
-  window.renderLeaders();
-  window.updateProgressBar();
+  // window.renderLeaders();
+  // window.updateProgressBar();
   window.updateImageFileName();
 
-  await window.fetchCurrentUser();
+  user = await window.fetchCurrentUser();
   await window.loadPosts();
   window.startPostStream();
+
+  leaders = await fetchLeaders();
+  renderLeaders(leaders);
+  await budgetSummary();
+
+  async function fetchLeaders() {
+    try {
+      const token = window.API.getToken();
+      const res = await fetch("/api/leaderboard/global", {
+      headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error("Failed to fetch leaderboard");
+      const data = await res.json();
+      return data.slice(0, 3);
+    } catch (err) {
+      console.error("Error fetching leaders:", err);
+      return [];
+    }
+  }
+
+  function renderLeaders(leaders) {
+    const container = document.getElementById("leadersList");
+    if (!container) return;
+
+    container.innerHTML = leaders.map((leader, index) => `
+      <div class="leader-item">
+        <div class="leader-info">
+          <div class="post-avatar">
+              <img 
+                src="${leader.profile_picture || '/resources/img/PFP_Default.jpeg'}" 
+                alt="${leader.username}" 
+                class="post-avatar-img" 
+              />
+          </div>
+          <div class="leader-details">
+            <h3>${leader.username}</h3>
+            <p>${leader.savings_percentage != null
+                ? "Saved " + (leader.savings_percentage * 100).toFixed(1) + "%" 
+              : "No budget set"}</p>
+          </div>
+        </div>
+        <span class="leader-medal">
+          ${index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
+        </span>
+      </div>
+    `).join("");
+  }
+
+  async function budgetSummary() {
+    const container = document.getElementById("envelopesSummary");
+    if (!container) return;
+    try {
+    const res = await fetch("/api/budgets/summary", {
+      headers: {
+        Authorization: `Bearer ${window.API.getToken()}`
+      }
+    });
+    if (!res.ok) throw new Error("Failed to fetch summary");
+    const summaryRows = await res.json();
+
+    const totalBudget = (summaryRows || []).reduce(
+      (sum, row) => sum + (Number(row.budget_amount) || 0),
+      0
+    );
+    const totalSpent = (summaryRows || []).reduce(
+      (sum, row) => sum + (Number(row.total_spent) || 0),
+      0
+    );
+    const remaining = Math.max(0, totalBudget - totalSpent);
+
+    const savingsPct =
+      totalBudget > 0
+        ? ((totalBudget - totalSpent) / totalBudget * 100).toFixed(1) + "%"
+        : "No budget set";
+
+    container.innerHTML = `
+        <div class="summary-item">
+          <span class="label">Total Budget</span>
+          <span class="value">$${totalBudget.toFixed(2)}</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Total Spent</span>
+          <span class="value">$${totalSpent.toFixed(2)}</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Total Remaining</span>
+          <span class="value">$${remaining.toFixed(2)}</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Savings %</span>
+          <span class="value">${savingsPct}</span>
+        </div>
+    `;
+} catch (err) {
+    console.error("Error rendering home budget summary:", err);
+}
+  }
 
   // If the user shared a transaction, prefill a post and open the modal
   let draftFromTransaction = null;

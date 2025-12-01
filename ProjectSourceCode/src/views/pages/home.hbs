@@ -13,7 +13,7 @@
             <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
             <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
           </svg>
-          <h2>Daily Leaders</h2>
+          <h2>Top Savers</h2>
         </div>
         <div class="leaders-list" id="leadersList"></div>
       </div>
@@ -25,18 +25,9 @@
             <circle cx="12" cy="12" r="6"></circle>
             <circle cx="12" cy="12" r="2"></circle>
           </svg>
-          <h2>Daily Goal</h2>
+          <h2>Budget Summary</h2>
         </div>
-        <div class="goal-content">
-          <div class="goal-text">
-            <span>Spent</span>
-            <span class="goal-amount">$67.50 / $100</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" id="progressBar"></div>
-          </div>
-          <p class="goal-remaining">$32.50 remaining</p>
-        </div>
+        <div id="envelopesSummary" class="envelopes-summary"></div>
       </div>
 
       <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#addPostModal">
@@ -81,6 +72,7 @@
               <option value="Food">Food</option>
               <option value="Groceries">Groceries</option>
               <option value="Transportation">Transportation</option>
+              <option value="Shopping">Shopping</option>
               <option value="Entertainment">Entertainment</option>
               <option value="Bills">Bills</option>
               <option value="Pets">Pets</option>

@@ -1,27 +1,21 @@
 {{> header isSettings=true }}
 
 <main class="main-container">
+  <div class="settings-card">
+    <h1>Settings</h1>
 
-  <!-- Profile Picture Card -->
-  <div class="card">
-    <div class="card-header">
-      <h2>Profile Picture</h2>
-    </div>
-    <div class="card-content">
-      <input id="profile-upload" type="file" accept="image/*" class="file-input" />
-    </div>
-  </div>
-  
-  <!-- Delete Account Card -->
-  <div class="card">
-    <div class="card-header">
-      <h2>Account</h2>
-    </div>
-    <div class="card-content">
+    <section class="setting-item">
+      <label class="setting-label">Profile Picture</label>
+      <label class="upload-area">
+        <input id="profile-upload" type="file" accept="image/*">
+      </label>
+    </section>
+
+    <section class="setting-item danger">
+      <label class="setting-label">Account</label>
       <button id="Delete_Account" class="btn-danger">Delete Account</button>
-    </div>
+    </section>
   </div>
-
 </main>
 
 {{> footer year=year }}

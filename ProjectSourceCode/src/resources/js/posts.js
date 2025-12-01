@@ -118,7 +118,7 @@ window.buildPostHTML = function (post) {
         ${amount || category ? `
           <div class="post-amount">
             ${amount ? `<div class="post-price">$${amount}</div>` : ""}
-            ${category ? `<span class="post-category">${category}</span>` : ""}
+            ${category ? `<span class="post-category" data-category="${category}">${category}</span>` : ""}
           </div>` 
         : ""}
       </div>
