@@ -66,6 +66,13 @@
     color: #1e293b;
 }
 
+.leader-details-blank h3 {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+}
+
 .leader-details p {
     font-size: 0.75rem;
     color: #64748b;
@@ -476,4 +483,6 @@
   background: #f1f5f9;
   color: #475569;
 }
+
+
 

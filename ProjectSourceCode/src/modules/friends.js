@@ -160,11 +160,18 @@ router.get("/search", protect, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT id, username, profile_picture
-       FROM users
-       WHERE username ILIKE $1
-       AND id <> $2
-       LIMIT 10`,
+        `SELECT u.id, u.username, u.profile_picture
+        FROM users u
+        WHERE u.username ILIKE $1
+        AND u.id <> $2
+        AND NOT EXISTS (
+        SELECT 1 FROM friends f
+        WHERE (
+          (f.user_id = $2 AND f.friend_id = u.id) OR
+          (f.friend_id = $2 AND f.user_id = u.id)
+          )
+        )
+        LIMIT 10`,
       [`%${query}%`, currentUserId]
     );
 

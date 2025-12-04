@@ -73,23 +73,4 @@ async function loadLeaderboard(type) {
   }
 }
 
-// Tabs
-document.getElementById("global-tab").addEventListener("click", () => {
-  setActive("global");
-  loadLeaderboard("global");
-});
-
-document.getElementById("friends-tab").addEventListener("click", () => {
-  setActive("friends");
-  loadLeaderboard("friends");
-});
-
-function setActive(tab) {
-  document.getElementById("global-tab").classList.remove("active");
-  document.getElementById("friends-tab").classList.remove("active");
-
-  document.getElementById(`${tab}-tab`).classList.add("active");
-}
-
-// Default load
 loadLeaderboard("global");
