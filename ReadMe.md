@@ -22,7 +22,8 @@ Kishore Karthikeyan, Matt Topham, Aiden Johnson, Ellie Odau, Harrie Ha, Emir Sim
 │   ├── release-notes-v0.1
 │   ├── release-notes-v0.2
 │   ├── release-notes-v0.3
-│   └── release-notes-v0.4
+│   ├── release-notes-v0.4
+|   └── release-notes-v0.5
 ├── ProjectSourceCode/
 │   ├── src
 │   │   ├── config
@@ -119,6 +120,7 @@ Kishore Karthikeyan, Matt Topham, Aiden Johnson, Ellie Odau, Harrie Ha, Emir Sim
 - **release-notes-v0.2** – Release notes for version 0.2.
 - **release-notes-v0.3** – Release notes for version 0.3.
 - **release-notes-v0.4** – Release notes for version 0.4.
+- **release-notes-v0.5** – Release notes for version 0.5.
 
 ---
 
