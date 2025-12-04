@@ -30,33 +30,63 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  function renderLeaders(leaders) {
-    const container = document.getElementById("leadersList");
-    if (!container) return;
 
-    container.innerHTML = leaders.map((leader, index) => `
+function renderLeaders(leaders) {
+  const container = document.getElementById("leadersList");
+  if (!container) return;
+
+  const filled = [...leaders];
+  while (filled.length < 3) filled.push(null);
+
+  container.innerHTML = filled.map((leader, index) => {
+    if (!leader) {
+      return `
+        <div class="leader-item">
+          <div class="leader-info">
+           <div class="leader-avatar">
+                <img 
+                  src="${'/resources/img/PFP_Default.jpeg'}"
+                  alt="No user"
+                  class="post-avatar-img"
+                />
+              </div>
+            <div class="leader-details-blank">
+              <h3>No leader yet</h3>
+            </div>
+          </div>
+          <span class="leader-medal">
+          ${index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
+          </span>
+        </div>
+      `;
+    }
+
+    return `
       <div class="leader-item">
         <div class="leader-info">
-          <div class="post-avatar">
-              <img 
-                src="${leader.profile_picture || '/resources/img/PFP_Default.jpeg'}" 
-                alt="${leader.username}" 
-                class="post-avatar-img" 
-              />
+          <div class="leader-avatar">
+            <img 
+              src="${leader.profile_picture || '/resources/img/PFP_Default.jpeg'}"
+              alt="${leader.username}"
+              class="post-avatar-img"
+            />
           </div>
           <div class="leader-details">
             <h3>${leader.username}</h3>
             <p>${leader.savings_percentage != null
-                ? "Saved " + (leader.savings_percentage * 100).toFixed(1) + "%" 
-              : "No budget set"}</p>
+                ? "Saved " + (leader.savings_percentage * 100).toFixed(1) + "%"
+                : "No budget set"}</p>
           </div>
         </div>
         <span class="leader-medal">
           ${index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
         </span>
       </div>
-    `).join("");
-  }
+    `;
+  }).join("");
+}
+
+
 
   async function budgetSummary() {
     const container = document.getElementById("envelopesSummary");
